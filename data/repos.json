@@ -1,0 +1,29 @@
+{
+    "repositories": [
+        {
+            "url": "https://github.com/FlowiseAI/Flowise.git",
+            "path": "data/repos/Flowise",
+            "ref": null
+        },
+        {
+            "url": "https://github.com/FlowiseAI/FlowiseChatEmbed.git",
+            "path": "data/repos/FlowiseChatEmbed",
+            "ref": null
+        },
+        {
+            "url": "https://github.com/FlowiseAI/FlowiseDocs.git",
+            "path": "data/repos/FlowiseDocs",
+            "ref": null
+        },
+        {
+            "url": "https://github.com/FlowiseAI/FlowiseEmbedReact.git",
+            "path": "data/repos/FlowiseEmbedReact",
+            "ref": null
+        },
+        {
+            "url": "https://github.com/FlowiseAI/FlowisePy.git",
+            "path": "data/repos/FlowisePy",
+            "ref": null
+        }
+    ]
+}

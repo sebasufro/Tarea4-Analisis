@@ -1,0 +1,355 @@
+---
+title: "Clasificador de Sonido"
+description: "Este es un modelo pre-entrenado que clasifica comandos de voz en tiempo real usando tu micrófono."
+format: html
+---
+
+Este modelo utiliza SpeechCommands18w, entrenado para reconocer 18 palabras de comando en inglés. El clasificador escucha continuamente a través de tu micrófono y detecta cuál de las 18 palabras está siendo pronunciada.
+
+**Instrucciones:**
+
+- 1. Haz clic en el botón "Iniciar Clasificador de Sonido"
+
+- 2. Permite el acceso a tu micrófono cuando se te solicite
+
+- 3. Di en voz alta y clara una de las 18 palabras mostradas en pantalla
+
+- 4. El modelo detectará la palabra y la mostrará en grande en la parte superior
+
+::: {.callout-note}
+Para mejores resultados, habla claramente y en un ambiente con poco ruido de fondo.
+:::
+
+<div id="button-container" style="text-align: center; margin: 20px 0;">
+  <button id="start-button" style="padding: 12px 24px; font-size: 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+    Iniciar Clasificador de Sonido
+  </button>
+  <button id="stop-button" style="display: none; padding: 12px 24px; font-size: 16px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">
+    Detener Clasificador
+  </button>
+  <p id="status-message" style="margin-top: 10px; font-style: italic; color: #666;"></p>
+</div>
+
+<div id="p5-sketch" style="display: none; text-align: center;">
+  <div id="canvas-container" style="display: inline-block;"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+<script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+
+<script>
+// Wait for ml5 to be fully loaded
+window.addEventListener('load', function() {
+    // Extra check to ensure ml5 is available
+    if (typeof ml5 === 'undefined') {
+        console.error('ml5 is not loaded');
+        return;
+    }
+
+    const startButton = document.getElementById('start-button');
+    const stopButton = document.getElementById('stop-button');
+    const statusMessage = document.getElementById('status-message');
+    const sketchContainer = document.getElementById('p5-sketch');
+    let sketchStarted = false;
+    let p5Instance = null;
+    let classifier = null;
+
+    startButton.addEventListener('click', function() {
+        if (sketchStarted) return;
+        
+        sketchStarted = true;
+        startButton.style.display = 'none';
+        stopButton.style.display = 'inline-block';
+        statusMessage.textContent = 'Cargando modelo...';
+        
+        // Show the canvas container
+        sketchContainer.style.display = 'block';
+
+        const sketch = (p) => {
+            // Array containing the 18 words of SpeechCommands18w
+            let words = [
+                "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+                "up", "down", "left", "right", "go", "stop", "yes", "no"
+            ];
+
+            // Variable for displaying the results on the canvas
+            let predictedWord = "";
+
+            p.preload = function() {
+                // Options for the SpeechCommands18w model, the default probabilityThreshold is 0
+                let options = { probabilityThreshold: 0.7 };
+                // Load SpeechCommands18w sound classifier model
+                classifier = ml5.soundClassifier("SpeechCommands18w", options);
+            };
+
+            p.setup = function() {
+                p.createCanvas(650, 450);
+                statusMessage.textContent = '¡Modelo cargado! Empieza a hablar...';
+                statusMessage.style.color = '#4CAF50';
+                // Classify the sound from microphone in real time
+                classifier.classifyStart(gotResult);
+            };
+
+            p.draw = function() {
+                p.background(250);
+                // Call function for displaying background words
+                displayWords();
+
+                // Once the model outputs results start displaying the predicted word on the canvas
+                if (predictedWord !== "") {
+                    p.fill(211, 107, 255);
+                    p.textAlign(p.CENTER, p.CENTER);
+                    p.textSize(64);
+                    p.text(predictedWord, p.width / 2, 90);
+                }
+            };
+
+            // Function to display the 18 words on the canvas
+            function displayWords() {
+                p.textAlign(p.CENTER, p.CENTER);
+                p.textSize(32);
+                p.fill(96);
+                p.text("Say one of these words!", p.width / 2, 40);
+
+                let x = 125;
+                let y = 150;
+                // Words appear in 3 columns of 6 rows
+                for (let i = 0; i < words.length; i++) {
+                    p.fill(158);
+                    p.text(words[i], x, y);
+                    y += 50;
+                    if ((i + 1) % 6 === 0) {
+                        x += 200;
+                        y = 150;
+                    }
+                }
+            }
+
+            // A function to run when we get any errors and the results
+            function gotResult(results) {
+                // The results are in an array ordered by confidence
+                console.log(results);
+                // Load the first label to the text variable displayed on the canvas
+                if (results && results.length > 0) {
+                    predictedWord = results[0].label;
+                }
+            }
+        }; 
+        p5Instance = new p5(sketch, 'canvas-container');
+    });
+
+    stopButton.addEventListener('click', function() {
+        // Stop the classifier
+        if (classifier) {
+            classifier.classifyStop();
+            classifier = null;
+        }
+        
+        // Remove the p5 instance
+        if (p5Instance) {
+            p5Instance.remove();
+            p5Instance = null;
+        }
+        
+        // Hide canvas and reset UI
+        sketchContainer.style.display = 'none';
+        stopButton.style.display = 'none';
+        startButton.style.display = 'inline-block';
+        statusMessage.textContent = '';
+        sketchStarted = false;
+    });
+});
+</script>
+
+## Explicación del Código
+
+### Código Completo
+
+```javascript
+let classifier;
+
+// Array containing the 18 words of SpeechCommands18w
+let words = [
+    "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+    "up", "down", "left", "right", "go", "stop", "yes", "no"
+];
+
+// Variable for displaying the results on the canvas
+let predictedWord = "";
+
+function preload() {
+    // Options for the SpeechCommands18w model
+    let options = { probabilityThreshold: 0.7 };
+    // Load SpeechCommands18w sound classifier model
+    classifier = ml5.soundClassifier("SpeechCommands18w", options);
+}
+
+function setup() {
+    createCanvas(650, 450);
+    // Classify the sound from microphone in real time
+    classifier.classifyStart(gotResult);
+}
+
+function draw() {
+    background(250);
+    // Call function for displaying background words
+    displayWords();
+    
+    // Once the model outputs results start displaying the predicted word
+    if (predictedWord !== "") {
+        fill(211, 107, 255);
+        textAlign(CENTER, CENTER);
+        textSize(64);
+        text(predictedWord, width / 2, 90);
+    }
+}
+
+// Function to display the 18 words on the canvas
+function displayWords() {
+    textAlign(CENTER, CENTER);
+    textSize(32);
+    fill(96);
+    text("Say one of these words!", width / 2, 40);
+    
+    let x = 125;
+    let y = 150;
+    // Words appear in 3 columns of 6 rows
+    for (let i = 0; i < words.length; i++) {
+        fill(158);
+        text(words[i], x, y);
+        y += 50;
+        if ((i + 1) % 6 === 0) {
+            x += 200;
+            y = 150;
+        }
+    }
+}
+
+// A function to run when we get any errors and the results
+function gotResult(results) {
+    // The results are in an array ordered by confidence
+    console.log(results);
+    // Load the first label to the text variable
+    if (results && results.length > 0) {
+        predictedWord = results[0].label;
+    }
+}
+```
+
+### 1. Declaración de Variables
+
+Primero, declaramos las variables que necesitaremos:
+
+```javascript
+let classifier;
+let words = [
+    "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+    "up", "down", "left", "right", "go", "stop", "yes", "no"
+];
+let predictedWord = "";
+```
+
+- `classifier`: Almacenará el modelo SpeechCommands18w de ml5.js
+- `words`: Array con las 18 palabras que el modelo puede reconocer
+- `predictedWord`: Guardará la última palabra detectada por el modelo
+
+### 2. Carga del Modelo (preload)
+
+La función `preload()` carga el clasificador de sonido antes de iniciar:
+
+```javascript
+function preload() {
+    let options = { probabilityThreshold: 0.7 };
+    classifier = ml5.soundClassifier("SpeechCommands18w", options);
+}
+```
+
+- `probabilityThreshold: 0.7`: Solo acepta predicciones con 70% o más de confianza
+- `ml5.soundClassifier("SpeechCommands18w")`: Carga el modelo pre-entrenado con 18 comandos
+- Esta función garantiza que el modelo esté listo antes de `setup()`
+
+### 3. Configuración e Inicio de Clasificación (setup)
+
+La función `setup()` configura el canvas e inicia la clasificación continua:
+
+```javascript
+function setup() {
+    createCanvas(650, 450);
+    classifier.classifyStart(gotResult);
+}
+```
+
+- `createCanvas(650, 450)`: Crea el lienzo para mostrar las palabras
+- `classifyStart(gotResult)`: Inicia la clasificación continua del audio del micrófono
+- Cada vez que detecta un sonido, llama a `gotResult()` con los resultados
+
+### 4. Visualización (draw)
+
+La función `draw()` se ejecuta continuamente para mostrar la interfaz:
+
+```javascript
+function draw() {
+    background(250);
+    displayWords();
+    
+    if (predictedWord !== "") {
+        fill(211, 107, 255);
+        textAlign(CENTER, CENTER);
+        textSize(64);
+        text(predictedWord, width / 2, 90);
+    }
+}
+```
+
+- `background(250)`: Limpia el canvas con un fondo gris claro
+- `displayWords()`: Muestra las 18 palabras disponibles
+- `text(predictedWord, ...)`: Muestra en grande la palabra detectada en color morado
+
+### 5. Mostrar Palabras Disponibles (displayWords)
+
+Esta función dibuja todas las palabras que el usuario puede decir:
+
+```javascript
+function displayWords() {
+    textAlign(CENTER, CENTER);
+    textSize(32);
+    fill(96);
+    text("Say one of these words!", width / 2, 40);
+    
+    let x = 125;
+    let y = 150;
+    for (let i = 0; i < words.length; i++) {
+        fill(158);
+        text(words[i], x, y);
+        y += 50;
+        if ((i + 1) % 6 === 0) {
+            x += 200;
+            y = 150;
+        }
+    }
+}
+```
+
+- Organiza las 18 palabras en 3 columnas de 6 filas
+- `(i + 1) % 6 === 0`: Detecta cuando completar una columna
+- Mueve `x` a la derecha y resetea `y` al iniciar nueva columna
+
+### 6. Procesamiento de Resultados (gotResult)
+
+Esta función recibe las predicciones del clasificador:
+
+```javascript
+function gotResult(results) {
+    console.log(results);
+    if (results && results.length > 0) {
+        predictedWord = results[0].label;
+    }
+}
+```
+
+- `results`: Array ordenado por nivel de confianza
+- `results[0].label`: La palabra con mayor probabilidad
+- Se actualiza `predictedWord` que se muestra en `draw()`
+- Esta función se llama automáticamente cada vez que hay una nueva predicción
+
+</script>

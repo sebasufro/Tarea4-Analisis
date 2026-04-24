@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "id_2026"
+  site-url: "https://dci-courses.github.io/id_2026"
+  description: "Apuntes para el curso de Ing de Datos (ICC732)"
+  repo-branch: main
+  repo-url: "https://github.com/dci-courses/id_2026"

@@ -1,0 +1,26 @@
+website:
+    sidebar:
+        contents:
+            - index.ipynb
+            - section: ML5
+              contents:
+                  - ml5/image_classification.qmd
+                  - ml5/image_classification_tm.qmd
+                  - ml5/sound_classifier.qmd
+                  - ml5/object_detection.qmd
+                  - ml5/hand_pose.qmd
+                  - ml5/dino_run.qmd
+            - section: SBOMs
+              contents:
+                  - sbom/introduccion_sboms.md
+                  - sbom/explicacion_script_sbom.ipynb
+                  - sbom/generacion_sbom.ipynb
+            - section: Vulnerabilidades
+              contents:
+                  - vuln/introduccion_vulnerabilidades.md
+                  - vuln/taxonomia_vulnerabilidades.md
+                  - vuln/caso_litellm.md
+                  - vuln/generacion_codeql.ipynb
+                  - vuln/explicacion_script_codeql.ipynb
+                  - vuln/generacion_grype.ipynb
+                  - vuln/explicacion_script_grype.ipynb
