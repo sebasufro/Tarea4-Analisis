@@ -1,0 +1,1132 @@
+[
+  {
+    "objectID": "vuln/generacion_codeql.html",
+    "href": "vuln/generacion_codeql.html",
+    "title": "Análisis de Seguridad con CodeQL",
+    "section": "",
+    "text": "Este notebook ejecuta un análisis de seguridad estático sobre los repositorios clonados en data/repos/ utilizando CodeQL, la herramienta de análisis de código de GitHub.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Seguridad con CodeQL"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_codeql.html#qué-es-codeql",
+    "href": "vuln/generacion_codeql.html#qué-es-codeql",
+    "title": "Análisis de Seguridad con CodeQL",
+    "section": "¿Qué es CodeQL?",
+    "text": "¿Qué es CodeQL?\nCodeQL es un motor de búsqueda de código que permite escribir consultas para encontrar vulnerabilidades, problemas de seguridad y defectos de codificación en el código fuente. Produce resultados en formato SARIF (Static Analysis Results Interchange Format).",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Seguridad con CodeQL"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_codeql.html#flujo-de-ejecución",
+    "href": "vuln/generacion_codeql.html#flujo-de-ejecución",
+    "title": "Análisis de Seguridad con CodeQL",
+    "section": "Flujo de Ejecución",
+    "text": "Flujo de Ejecución\n\nDescubrimiento de repositorios: Escanea data/repos/ para encontrar todos los subdirectorios\nCreación de base de datos CodeQL: Para cada repositorio, CodeQL crea una base de datos indexada del código\nAnálisis: Se ejecutan consultas de seguridad predefinidas en la base de datos\nGeneración de resultados: Los hallazgos se convierten a formato JSON normalizado y se guardan en data/results/",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Seguridad con CodeQL"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_codeql.html#preparación-importar-scriptsgenerate_codeql.py",
+    "href": "vuln/generacion_codeql.html#preparación-importar-scriptsgenerate_codeql.py",
+    "title": "Análisis de Seguridad con CodeQL",
+    "section": "Preparación: Importar scripts/generate_codeql.py",
+    "text": "Preparación: Importar scripts/generate_codeql.py\nA continuación importaremos el módulo CodeQLAnalyzer desde el archivo scripts/generate_codeql.py.\n\nimport sys\nfrom pathlib import Path\nimport json\nimport pandas as pd\n\n# Agregar el directorio scripts al path para importar el modulo generate_codeql\n# Este módulo contiene la clase CodeQLAnalyzer que orquesta todo el análisis\nproject_root = Path().cwd().parent.parent\nscripts_path = project_root / \"scripts\"\nif str(scripts_path) not in sys.path:\n    sys.path.insert(0, str(scripts_path))\n\nprint(f\"Notebook working directory: {Path().cwd()}\")\nprint(f\"Project root: {project_root}\")\nprint(f\"Scripts path: {scripts_path}\")\nprint(f\"Importing from: generate_codeql.py\")\n\nNotebook working directory: /workspaces/id_2026/nbs/vuln\nProject root: /workspaces/id_2026\nScripts path: /workspaces/id_2026/scripts\nImporting from: generate_codeql.py\n\n\n\n# Importar la clase CodeQLAnalyzer desde generate_codeql.py\nfrom generate_codeql import CodeQLAnalyzer\n\nprint(\"✓ Importado correctamente: CodeQLAnalyzer desde scripts/generate_codeql.py\")\n\n✓ Importado correctamente: CodeQLAnalyzer desde scripts/generate_codeql.py",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Seguridad con CodeQL"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_codeql.html#configuración",
+    "href": "vuln/generacion_codeql.html#configuración",
+    "title": "Análisis de Seguridad con CodeQL",
+    "section": "Configuración",
+    "text": "Configuración\n\n# Configurar rutas\nrepos_path = project_root / \"data\" / \"repos\"\noutput_path = project_root / \"data\" / \"results\"\n\n# Crear analizador\nanalizador = CodeQLAnalyzer(\n    repos_path=str(repos_path),\n    output_path=str(output_path)\n)\n\n# Configurar para ejecución normal (no dry-run)\nanalizador.dry_run = False\n\nprint(f\"Repos path: {repos_path}\")\nprint(f\"Output path: {output_path}\")\nprint(f\"Dry run: {analizador.dry_run}\")\n\nRepos path: /workspaces/id_2026/data/repos\nOutput path: /workspaces/id_2026/data/results\nDry run: False",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Seguridad con CodeQL"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_codeql.html#ejecución-análisis-codeql-usando-scriptsgenerate_codeql.py",
+    "href": "vuln/generacion_codeql.html#ejecución-análisis-codeql-usando-scriptsgenerate_codeql.py",
+    "title": "Análisis de Seguridad con CodeQL",
+    "section": "Ejecución: Análisis CodeQL (usando scripts/generate_codeql.py)",
+    "text": "Ejecución: Análisis CodeQL (usando scripts/generate_codeql.py)\nAhora ejecutaremos el análisis CodeQL sobre todos los repositorios descubiertos. El script generate_codeql.py manejará automáticamente la orquestación completa.\n\n# Descubrir repositorios usando el método del CodeQLAnalyzer\n# Este método viene de scripts/generate_codeql.py\nrepositorios = analizador.discover_repositories()\nprint(f\"Repositorios encontrados: {len(repositorios)}\")\nfor repo in repositorios:\n    print(f\"  - {repo}\")\n\nRepositorios encontrados: 3\n  - data/repos/claude-code-action\n  - data/repos/genai-code-review\n  - data/repos/opencode\n\n\n\nprint(\"Iniciando análisis CodeQL con scripts/generate_codeql.py...\")\nanalizador.run()\nprint(\"✓ Análisis completado\")\n\nINFO | Usando CodeQL CLI: /usr/local/bin/codeql\nINFO | === Diagnóstico del Entorno CodeQL ===\n\n\nIniciando análisis CodeQL con scripts/generate_codeql.py...\n\n\nINFO | ✓ CodeQL CLI: CodeQL command-line toolchain release 2.25.1.\nINFO | ✓ Node.js: v20.20.2\nINFO | ✓ npm: 10.8.2\nINFO | Verificando query packs...\nINFO | ✓ Query pack codeql/python-queries disponible\nINFO | ✓ Query pack codeql/javascript-queries disponible\nINFO | ✓ Query pack codeql/java-queries disponible\nINFO | === Fin Diagnóstico ===\n\nINFO | [1/3] Procesando repositorio data/repos/claude-code-action\nINFO | Lenguaje detectado en claude-code-action: javascript\nINFO | Directorio temporal CodeQL: /tmp/codeql_analysis\nINFO | Creando base de datos CodeQL para claude-code-action (lenguaje: javascript)...\nINFO | Usando suite compilada: /home/vscode/.codeql/packages/codeql/javascript-queries/2.3.6/codeql-suites/javascript-security-and-quality.qls\nINFO | SARIF guardado en: /workspaces/id_2026/data/results/claude-code-action_temp.sarif (284762 bytes)\nINFO | SARIF output length: 284762 bytes\nINFO | parse_sarif: recibiendo 284762 bytes\nINFO | parse_sarif: 1 runs encontrados\nINFO | parse_sarif: 16 resultados en run[0]\nINFO | parse_sarif: total_issues=16\nINFO | save_analysis: claude-code-action con 16 issues\nINFO | Analisis CodeQL guardado en data/results/claude-code-action-codeql.json\nINFO | [2/3] Procesando repositorio data/repos/genai-code-review\nINFO | Lenguaje detectado en genai-code-review: python\nINFO | Creando base de datos CodeQL para genai-code-review (lenguaje: python)...\nINFO | Usando suite compilada: /home/vscode/.codeql/packages/codeql/python-queries/1.7.11/codeql-suites/python-security-and-quality.qls\nINFO | SARIF guardado en: /workspaces/id_2026/data/results/genai-code-review_temp.sarif (132815 bytes)\nINFO | SARIF output length: 132815 bytes\nINFO | parse_sarif: recibiendo 132815 bytes\nINFO | parse_sarif: 1 runs encontrados\nINFO | parse_sarif: 4 resultados en run[0]\nINFO | parse_sarif: total_issues=4\nINFO | save_analysis: genai-code-review con 4 issues\nINFO | Analisis CodeQL guardado en data/results/genai-code-review-codeql.json\nINFO | [3/3] Procesando repositorio data/repos/opencode\nINFO | Lenguaje detectado en opencode: javascript\nINFO | Creando base de datos CodeQL para opencode (lenguaje: javascript)...\nINFO | Usando suite compilada: /home/vscode/.codeql/packages/codeql/javascript-queries/2.3.6/codeql-suites/javascript-security-and-quality.qls\nINFO | SARIF guardado en: /workspaces/id_2026/data/results/opencode_temp.sarif (1454012 bytes)\nINFO | SARIF output length: 1454012 bytes\nINFO | parse_sarif: recibiendo 1454012 bytes\nINFO | parse_sarif: 1 runs encontrados\nINFO | parse_sarif: 218 resultados en run[0]\nINFO | parse_sarif: total_issues=218\nINFO | save_analysis: opencode con 218 issues\nINFO | Analisis CodeQL guardado en data/results/opencode-codeql.json\nINFO | Resumen final | total_repos=3 | repos_analizados=3 | archivos_generados=3 | omitidos=0 | errores=0\n\n\n✓ Análisis completado",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Seguridad con CodeQL"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_codeql.html#inspección-de-resultados",
+    "href": "vuln/generacion_codeql.html#inspección-de-resultados",
+    "title": "Análisis de Seguridad con CodeQL",
+    "section": "Inspección de Resultados",
+    "text": "Inspección de Resultados\n\n# Listar archivos de resultados generados\noutput_path = project_root / \"data\" / \"results\"\ncodeql_files = sorted(output_path.glob(\"*-codeql.json\"))\n\nprint(f\"📁 Buscando en: {output_path}\")\nprint(f\"✓ Archivos de análisis CodeQL encontrados: {len(codeql_files)}\")\nfor archivo in codeql_files:\n    tamaño = archivo.stat().st_size / 1024  # KB\n    print(f\"  - {archivo.name} ({tamaño:.1f} KB)\")\n\n📁 Buscando en: /workspaces/id_2026/data/results\n✓ Archivos de análisis CodeQL encontrados: 3\n  - claude-code-action-codeql.json (6.9 KB)\n  - genai-code-review-codeql.json (1.8 KB)\n  - opencode-codeql.json (84.2 KB)\n\n\n\n# Cargar y mostrar resumen de UN análisis\nresults_dir = project_root / \"data\" / \"results\"\nresults_files = sorted(results_dir.glob(\"*-codeql.json\"))\n\nprint(f\"📂 Buscando en: {results_dir}\")\nprint(f\"📋 Archivos encontrados: {len(results_files)}\")\n\nif results_files:\n    result_file = results_files[0]\n    print(f\"📖 Leyendo: {result_file.name}\")\n    \n    with open(result_file, 'r', encoding='utf-8') as f:\n        data_content = json.load(f)\n    \n    repo_name_clean = result_file.stem.replace('-codeql', '')\n    total_found = data_content.get('total_issues', 0)\n    \n    print(f\"\\n📊 ANÁLISIS: {repo_name_clean}\")\n    print(f\"{'='*50}\")\n    print(f\"✓ Total de problemas encontrados: {total_found}\")\n    \n    if total_found &gt; 0:\n        severity_data = data_content.get('issues_by_severity', {})\n        print(f\"\\n🔍 Problemas por severidad:\")\n        for severity_type, count in severity_data.items():\n            if count &gt; 0:\n                emoji = \"🔴\" if severity_type == \"error\" else \"🟡\" if severity_type == \"warning\" else \"⚪\"\n                print(f\"  {emoji} {severity_type}: {count}\")\n    else:\n        print(\"⚠️  No se encontraron problemas\")\nelse:\n    print(\"❌ No se encontraron archivos de análisis CodeQL\")\n\n📂 Buscando en: /workspaces/id_2026/data/results\n📋 Archivos encontrados: 3\n📖 Leyendo: claude-code-action-codeql.json\n\n📊 ANÁLISIS: claude-code-action\n==================================================\n✓ Total de problemas encontrados: 16\n\n🔍 Problemas por severidad:\n  🟡 warning: 16\n\n\n\n# Mostrar problemas detallados\noutput_path_det = project_root / \"data\" / \"results\"\ncodeql_files_det = sorted(output_path_det.glob(\"*-codeql.json\"))\n\nif codeql_files_det:\n    archivo_det = codeql_files_det[0]\n    \n    with open(archivo_det, 'r', encoding='utf-8') as f:\n        analisis_det = json.load(f)\n    \n    issues_list = analisis_det.get('issues', [])\n    \n    print(f\"📋 Leyendo: {archivo_det.name}\")\n    print(f\"📊 Total de issues en archivo: {len(issues_list)}\")\n    \n    if issues_list:\n        # Crear DataFrame con los problemas\n        df_issues = pd.DataFrame(issues_list)\n        \n        # Seleccionar y reordenar columnas\n        cols_mostrar = ['rule_id', 'level', 'message', 'file']\n        cols_disponibles = [c for c in cols_mostrar if c in df_issues.columns]\n        df_mostrar = df_issues[cols_disponibles].head(20)\n        \n        print(f\"\\n📋 Primeros 20 problemas encontrados:\")\n        print(f\"{'='*100}\")\n        for idx, row in df_mostrar.iterrows():\n            print(f\"\\n{idx+1}. [{row['level'].upper()}] {row['rule_id']}\")\n            print(f\"   📝 {row['message'][:80]}\")\n            if 'file' in row and pd.notna(row['file']):\n                print(f\"   📂 {row['file']}\")\n        \n        if len(issues_list) &gt; 20:\n            print(f\"\\n... y {len(issues_list)-20} problemas más\")\n    else:\n        print(\"⚠️  No hay detalles de problemas en el archivo\")\n\n📋 Leyendo: claude-code-action-codeql.json\n📊 Total de issues en archivo: 16\n\n📋 Primeros 20 problemas encontrados:\n====================================================================================================\n\n1. [WARNING] js/incomplete-multi-character-sanitization\n   📝 This string may still contain [&lt;!--](1), which may cause an HTML element injecti\n   📂 src/github/utils/sanitizer.ts\n\n2. [WARNING] js/xss-through-dom\n   📝 [DOM text](1) is reinterpreted as HTML without escaping meta-characters.\n   📂 docs/create-app.html\n\n3. [WARNING] js/http-to-file-access\n   📝 Write to file system depends on [Untrusted data](1).\n   📂 src/github/utils/image-downloader.ts\n\n4. [WARNING] js/file-access-to-http\n   📝 Outbound network request depends on [file data](1).\n   📂 src/entrypoints/post-buffered-inline-comments.ts\n\n5. [WARNING] js/file-access-to-http\n   📝 Outbound network request depends on [file data](1).\n   📂 src/mcp/github-file-ops-server.ts\n\n6. [WARNING] js/regex/missing-regexp-anchor\n   📝 When this is used as a regular expression on a URL, it may match anywhere, and a\n   📂 src/github/api/config.ts\n\n7. [WARNING] js/insecure-temporary-file\n   📝 Insecure creation of file in [the os temp dir](1).\nInsecure creation of file in \n   📂 base-action/src/prepare-prompt.ts\n\n8. [WARNING] js/insecure-temporary-file\n   📝 Insecure creation of file in [the os temp dir](1).\n   📂 base-action/test/prepare-prompt.test.ts\n\n9. [WARNING] js/insecure-temporary-file\n   📝 Insecure creation of file in [the os temp dir](1).\n   📂 base-action/test/prepare-prompt.test.ts\n\n10. [WARNING] js/insecure-temporary-file\n   📝 Insecure creation of file in [the os temp dir](1).\n   📂 base-action/test/prepare-prompt.test.ts\n\n11. [WARNING] js/insecure-temporary-file\n   📝 Insecure creation of file in [the os temp dir](1).\n   📂 base-action/test/setup-claude-code-settings.test.ts\n\n12. [WARNING] js/insecure-temporary-file\n   📝 Insecure creation of file in [the os temp dir](1).\n   📂 src/github/utils/image-downloader.ts\n\n13. [WARNING] js/insecure-temporary-file\n   📝 Insecure creation of file in [the os temp dir](1).\n   📂 test/github-file-ops-path-validation.test.ts\n\n14. [WARNING] js/insecure-temporary-file\n   📝 Insecure creation of file in [the os temp dir](1).\n   📂 test/github-file-ops-path-validation.test.ts\n\n15. [WARNING] js/insecure-temporary-file\n   📝 Insecure creation of file in [the os temp dir](1).\n   📂 test/github-file-ops-path-validation.test.ts\n\n16. [WARNING] js/insecure-temporary-file\n   📝 Insecure creation of file in [the os temp dir](1).\n   📂 test/github-file-ops-path-validation.test.ts",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Seguridad con CodeQL"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_codeql.html#análisis-detallado-de-problemas",
+    "href": "vuln/generacion_codeql.html#análisis-detallado-de-problemas",
+    "title": "Análisis de Seguridad con CodeQL",
+    "section": "Análisis Detallado de Problemas",
+    "text": "Análisis Detallado de Problemas\n\n# Compilar estadísticas consolidadas\nfrom collections import defaultdict\n\noutput_path_stats = project_root / \"data\" / \"results\"\ncodeql_files_stats = sorted(output_path_stats.glob(\"*-codeql.json\"))\n\nstats_consolidadas = {\n    'total_repositories': len(codeql_files_stats),\n    'total_issues': 0,\n    'issues_by_repo': {},\n    'issues_by_severity': defaultdict(int),\n    'top_rules': defaultdict(int)\n}\n\nfor archivo in codeql_files_stats:\n    with open(archivo, 'r', encoding='utf-8') as f:\n        data = json.load(f)\n    \n    repo_name = archivo.stem.replace('-codeql', '')\n    total = data.get('total_issues', 0)\n    \n    stats_consolidadas['total_issues'] += total\n    stats_consolidadas['issues_by_repo'][repo_name] = total\n    \n    # Contar por severidad\n    for severity, count in data.get('issues_by_severity', {}).items():\n        stats_consolidadas['issues_by_severity'][severity] += count\n    \n    # Contar top rules\n    for issue in data.get('issues', []):\n        rule = issue.get('rule_id', 'unknown')\n        stats_consolidadas['top_rules'][rule] += 1\n\n# Convertir defaultdicts a dicts para visualización\nstats_consolidadas['issues_by_severity'] = dict(stats_consolidadas['issues_by_severity'])\nstats_consolidadas['top_rules'] = dict(sorted(\n    stats_consolidadas['top_rules'].items(), \n    key=lambda x: x[1], \n    reverse=True\n)[:10])\n\nprint(\"\\n📊 ESTADÍSTICAS CONSOLIDADAS DE CODEQL\")\nprint(f\"{'='*60}\")\nprint(f\"\\n📁 Repositorios analizados: {stats_consolidadas['total_repositories']}\")\nprint(f\"🔴 Total de problemas: {stats_consolidadas['total_issues']}\")\n\nprint(f\"\\n📋 Problemas por repositorio:\")\nfor repo, count in stats_consolidadas['issues_by_repo'].items():\n    print(f\"  • {repo}: {count}\")\n\nprint(f\"\\n⚠️  Problemas por severidad:\")\nfor severity, count in sorted(stats_consolidadas['issues_by_severity'].items()):\n    emoji = \"🔴\" if severity == \"error\" else \"🟡\" if severity == \"warning\" else \"⚪\"\n    print(f\"  {emoji} {severity}: {count}\")\n\nprint(f\"\\n🎯 Top 10 reglas más comunes:\")\nfor rule, count in list(stats_consolidadas['top_rules'].items())[:10]:\n    print(f\"  • {rule}: {count}\")\n\n\n📊 ESTADÍSTICAS CONSOLIDADAS DE CODEQL\n============================================================\n\n📁 Repositorios analizados: 3\n🔴 Total de problemas: 238\n\n📋 Problemas por repositorio:\n  • claude-code-action: 16\n  • genai-code-review: 4\n  • opencode: 218\n\n⚠️  Problemas por severidad:\n  🔴 error: 0\n  ⚪ note: 0\n  🟡 warning: 238\n\n🎯 Top 10 reglas más comunes:\n  • js/unused-local-variable: 112\n  • js/trivial-conditional: 33\n  • js/property-access-on-non-object: 20\n  • js/insecure-temporary-file: 14\n  • js/http-to-file-access: 6\n  • js/incomplete-sanitization: 5\n  • js/syntax-error: 4\n  • js/useless-expression: 4\n  • js/useless-assignment-to-local: 4\n  • py/unused-import: 3",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Seguridad con CodeQL"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_codeql.html#próximos-pasos",
+    "href": "vuln/generacion_codeql.html#próximos-pasos",
+    "title": "Análisis de Seguridad con CodeQL",
+    "section": "Próximos Pasos",
+    "text": "Próximos Pasos\nLos resultados del análisis CodeQL se han guardado en data/results/ con el patrón {repo-name}-codeql.json.\n\nCómo usar estos resultados:\n\nRevisar vulnerabilidades críticas: Filtrar por level: \"error\" para identificar problemas de seguridad críticos\nSeguimiento: Integrar con sistemas de seguimiento de mermas (issues, PRs) para gestionar remediación\nAnálisis de tendencias: Comparar resultados entre repositorios y períodos de tiempo\nAutomatizar: Integrar estos análisis en CI/CD para detectar problemas continuamente\n\n\nPara agregar nuevos repositorios:\n\nEdita data/repos.json y agrega nuevos repositorios:\n\n{\n    \"repositories\": [\n        {\n            \"url\": \"https://github.com/owner/repo-name.git\",\n            \"path\": \"data/repos/repo-name\",\n            \"ref\": \"v1.0.0\"\n        }\n    ]\n}\n\nEjecuta en la terminal (esto clonará los repositorios y los agregará como submódulos):\n\nuv run scripts/add_submodules.py\n\nEjecuta el análisis nuevamente desde el notebook o la terminal:\n\nuv run scripts/generate_codeql.py",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Seguridad con CodeQL"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_grype.html",
+    "href": "vuln/explicacion_script_grype.html",
+    "title": "Grype Script Detallado",
+    "section": "",
+    "text": "Ubicación: scripts/generate_grype.py\nMódulo importado en: - nbs/vuln/generacion_grype.ipynb (para ejecutar análisis) - Este notebook (para documentación)\nEste archivo contiene la clase GrypeAnalyzer, responsable de orquestar el análisis de vulnerabilidades en dependencias sobre múltiples repositorios. Fue diseñado siguiendo el mismo patrón que scripts/generate_codeql.py, proporcionando una interfaz consistente para automatizar análisis de seguridad.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Grype Script Detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_grype.html#acerca-de-este-archivo",
+    "href": "vuln/explicacion_script_grype.html#acerca-de-este-archivo",
+    "title": "Grype Script Detallado",
+    "section": "",
+    "text": "Ubicación: scripts/generate_grype.py\nMódulo importado en: - nbs/vuln/generacion_grype.ipynb (para ejecutar análisis) - Este notebook (para documentación)\nEste archivo contiene la clase GrypeAnalyzer, responsable de orquestar el análisis de vulnerabilidades en dependencias sobre múltiples repositorios. Fue diseñado siguiendo el mismo patrón que scripts/generate_codeql.py, proporcionando una interfaz consistente para automatizar análisis de seguridad.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Grype Script Detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_grype.html#cómo-se-usa-en-los-notebooks",
+    "href": "vuln/explicacion_script_grype.html#cómo-se-usa-en-los-notebooks",
+    "title": "Grype Script Detallado",
+    "section": "Cómo se Usa en los Notebooks",
+    "text": "Cómo se Usa en los Notebooks\nEn generacion_grype.ipynb:\nfrom generate_grype import GrypeAnalyzer\nanalizador = GrypeAnalyzer(repos_path, output_path)\nanalizador.run()  # Ejecuta todo el flujo de análisis",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Grype Script Detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_grype.html#descripción-general",
+    "href": "vuln/explicacion_script_grype.html#descripción-general",
+    "title": "Grype Script Detallado",
+    "section": "Descripción General",
+    "text": "Descripción General\nGrype es una herramienta de análisis de seguridad desarrollada por Anchore que permite: - Escanear dependencias en busca de vulnerabilidades conocidas (CVE, GitHub Advisories) - Detectar manifests de dependencias automáticamente - Retornar severidad y versiones de corrección - Generar reportes detallados en JSON\nEl archivo generate_grype.py automatiza este proceso para múltiples repositorios, similar a cómo generate_codeql.py automatiza el análisis estático de código.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Grype Script Detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_grype.html#arquitectura",
+    "href": "vuln/explicacion_script_grype.html#arquitectura",
+    "title": "Grype Script Detallado",
+    "section": "Arquitectura",
+    "text": "Arquitectura\n\nClase Principal: GrypeAnalyzer\nLa clase GrypeAnalyzer es el componente central que coordina todo el flujo de análisis.\nclass GrypeAnalyzer:\n    def __init__(self, repos_path: str, output_path: str):\n        self.repos_path = Path(repos_path)          # Directorio con repositorios\n        self.output_path = Path(output_path)        # Directorio de salida para resultados\n        self.project_root = Path(__file__).resolve().parents[1]\n        self.grype_bin = \"grype\"                    # Nombre ejecutable de Grype\n        self.dry_run = False                         # Modo preview sin ejecución\n        self.grype_path: str | None = None          # Ruta completa a ejecutable\n\n\nFlujo de Ejecución\nmain()\n  └─&gt; GrypeAnalyzer.run()\n       ├─&gt; discover_repositories()                   [Descubre repos en data/repos/]\n       ├─&gt; Para cada repositorio:\n       │   ├─&gt; run_grype(repo_path)                [Ejecuta análisis]\n       │   │   ├─&gt; _detectar_manifests()          [Busca package.json, requirements.txt, etc]\n       │   │   ├─&gt; subprocess: grype &lt;path&gt; --output=json\n       │   │   └─ Retorna: JSON con vulnerabilidades\n       │   ├─&gt; parse_grype_output()                 [Normaliza estructura]\n       │   └─&gt; save_analysis()                      [Guarda formatos raw + normalizado]\n       └─&gt; Resumen final",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Grype Script Detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_grype.html#métodos-principales",
+    "href": "vuln/explicacion_script_grype.html#métodos-principales",
+    "title": "Grype Script Detallado",
+    "section": "Métodos Principales",
+    "text": "Métodos Principales\n\n1. discover_repositories()\nPropósito: Escanear el directorio data/repos/ para encontrar todos los repositorios disponibles.\nFuncionamiento:\ndef discover_repositories(self) -&gt; list[str]:\n    # 1. Valida que data/repos/ existe\n    self._validar_directorio_repos()\n    \n    # 2. Lista todos los subdirectorios\n    repositorios = sorted(\n        str(ruta.relative_to(self.project_root))\n        for ruta in self.repos_path.iterdir()\n        if ruta.is_dir()  # Solo directorios\n    )\n    \n    # 3. Devuelve lista ordenada\n    return repositorios\nEjemplo de salida:\n[\n    'data/repos/claude-code-action',\n    'data/repos/genai-code-review',\n    'data/repos/opencode'\n]\n\n\n2. _detectar_manifests(ruta_repo)\nPropósito: Detectar manifests de dependencias soportados por Grype.\nEstrategia:\ndef _detectar_manifests(self, ruta_repo: Path) -&gt; list[str]:\n    # 1. Define manifests soportados por Grype\n    manifests_soportados = {\n        \"package.json\": \"npm\",\n        \"requirements.txt\": \"pip\",\n        \"pom.xml\": \"maven\",\n        \"build.gradle\": \"gradle\",\n        \"go.mod\": \"go\",\n        \"Cargo.toml\": \"cargo\",\n        # ... más\n    }\n    \n    # 2. Escanea archivos recursivamente\n    manifests_encontrados = []\n    for archivo in ruta_repo.rglob(\"*\"):  # rglob = recursivo\n        if archivo.is_file() and archivo.name in manifests_soportados:\n            manifests_encontrados.append(archivo.name)\n    \n    # 3. Devuelve lista única ordenada\n    return sorted(set(manifests_encontrados))\nEjemplo: - Entrada: Repo con package.json, package-lock.json, yarn.lock - Salida: [\"package-lock.json\", \"package.json\", \"yarn.lock\"]\nManifests soportados por Grype: - npm: package.json, package-lock.json, yarn.lock - Python: requirements.txt, Pipfile, Pipfile.lock, poetry.lock - Java: pom.xml, build.gradle - Go: go.mod, go.sum - Rust: Cargo.toml, Cargo.lock - Ruby: Gemfile, Gemfile.lock\n\n\n3. run_grype(repo_path)\nPropósito: Ejecutar Grype en el repositorio y retornar JSON con vulnerabilidades.\nFuncionamiento:\ndef run_grype(self, repo_path: str) -&gt; str:\n    # 1. Validar que repo existe\n    ruta_repo = self.project_root / repo_path\n    # ... validaciones ...\n    \n    # 2. Detectar manifests\n    manifests = self._detectar_manifests(ruta_repo)\n    if not manifests:\n        # Si no hay manifests, retornar JSON vacío\n        return json.dumps({\"matches\": [], \"source\": None})\n    \n    # 3. Construir comando Grype\n    comando = [\n        \"grype\",\n        str(ruta_repo),           # Ruta a escanear\n        \"--output=json\"           # Formato JSON\n    ]\n    \n    # 4. Ejecutar Grype\n    resultado = subprocess.run(comando, capture_output=True, text=True)\n    \n    # 5. Retornar JSON string\n    return resultado.stdout\nQué hace Grype: - Busca todos los manifests de dependencias en el directorio - Extrae lista de dependencias y versiones - Compara contra base de datos de vulnerabilidades (actualizada automáticamente) - Retorna matches con CVE, severidad (CVSS score), versiones de corrección\n\n\n4. parse_grype_output(grype_json_str)\nPropósito: Convertir JSON de Grype a un formato normalizado.\nFuncionamiento:\ndef parse_grype_output(self, grype_json_str: str) -&gt; dict:\n    # 1. Parsear JSON de Grype\n    grype_data = json.loads(grype_json_str)\n    \n    # 2. Inicializar estructura de salida\n    resultados = {\n        \"total_vulnerabilities\": 0,\n        \"vulnerabilities_by_severity\": {\n            \"critical\": 0,\n            \"high\": 0,\n            \"medium\": 0,\n            \"low\": 0\n        },\n        \"vulnerabilities\": [],      # Array de hallazgos individuales\n        \"grype_metadata\": {}         # Información de herramienta y contexto\n    }\n    \n    # 3. Procesar cada vulnerabilidad\n    vulnerabilidades_raw = grype_data.get(\"matches\", [])\n    for vuln in vulnerabilidades_raw:\n        # Convertir a formato normalizado\n        issue = self._procesar_vulnerabilidad_grype(vuln)\n        resultados[\"vulnerabilities\"].append(issue)\n        resultados[\"total_vulnerabilities\"] += 1\n        \n        # Contar por severidad\n        severity = issue.get(\"vuln_severity\", \"low\")\n        resultados[\"vulnerabilities_by_severity\"][severity] += 1\n    \n    return resultados\nSalida normalizada:\n{\n  \"total_vulnerabilities\": 45,\n  \"vulnerabilities_by_severity\": {\n    \"critical\": 2,\n    \"high\": 8,\n    \"medium\": 20,\n    \"low\": 15\n  },\n  \"vulnerabilities\": [\n    {\n      \"package_name\": \"lodash\",\n      \"current_version\": \"4.17.20\",\n      \"vuln_id\": \"CVE-2021-23337\",\n      \"vuln_severity\": \"high\",\n      \"fix_version\": \"4.17.21\",\n      \"message\": \"Prototype pollution in lodash...\",\n      \"cvss_score\": 7.5\n    }\n  ]\n}\n\n\n5. _procesar_vulnerabilidad_grype(vuln)\nPropósito: Convertir un match individual de Grype a formato normalizado.\nFuncionamiento:\ndef _procesar_vulnerabilidad_grype(self, vuln: dict) -&gt; dict:\n    # Extraer información del match\n    artifact = vuln.get(\"artifact\", {})        # Paquete afectado\n    vulnerability = vuln.get(\"vulnerability\", {})  # Detalles de CVE\n    metadata = vuln.get(\"metadata\", {})        # CVSS score, CWE, etc\n    \n    # Mapear CVSS score a severidad\n    cvss_score = metadata.get(\"cvss\", [{}])[0].get(\"score\", 0)\n    severity = self._determinar_severidad_por_cvss(cvss_score)\n    \n    # Retornar estructura normalizada\n    return {\n        \"package_name\": artifact.get(\"name\"),       # ej: \"lodash\"\n        \"current_version\": artifact.get(\"version\"), # ej: \"4.17.20\"\n        \"vuln_id\": vulnerability.get(\"id\"),        # ej: \"CVE-2021-23337\"\n        \"vuln_severity\": severity,                  # critical/high/medium/low\n        \"fix_version\": vuln.get(\"fix\", {}).get(\"versions\", [\"N/A\"])[0],\n        \"message\": vulnerability.get(\"description\"),\n        \"cvss_score\": cvss_score\n    }\nMapeo CVSS → Severidad: - CVSS ≥ 9.0 → critical - CVSS 7.0-8.9 → high - CVSS 4.0-6.9 → medium - CVSS &lt; 4.0 → low\n\n\n6. save_analysis(repo_name, grype_raw, analysis_data)\nPropósito: Guardar el análisis en dos formatos: raw (debug) y normalizado (análisis).\nFuncionamiento:\ndef save_analysis(self, repo_name: str, grype_raw: str, analysis_data: dict) -&gt; tuple[Path, Path]:\n    # 1. Validar entrada\n    if not repo_name:\n        raise ValueError(\"Repository name cannot be empty.\")\n    \n    # 2. Crear directorio de salida si no existe\n    self.output_path.mkdir(parents=True, exist_ok=True)\n    \n    # 3. Guardar formato RAW (original de Grype, para debug)\n    ruta_raw = self.output_path / f\"{repo_name}-grype-raw.json\"\n    ruta_raw.write_text(grype_raw, encoding=\"utf-8\")\n    \n    # 4. Guardar formato NORMALIZADO (para análisis)\n    ruta_normalizado = self.output_path / f\"{repo_name}-grype.json\"\n    contenido_json = json.dumps(analysis_data, ensure_ascii=False, indent=2)\n    ruta_normalizado.write_text(contenido_json, encoding=\"utf-8\")\n    \n    # 5. Retornar ambas rutas\n    return ruta_raw, ruta_normalizado\nArchivos generados por repositorio:\ndata/results/\n  ├── opencode-grype-raw.json        ← Salida original de Grype (debug visual)\n  ├── opencode-grype.json            ← Formato normalizado (análisis)\n  ├── claude-code-action-grype-raw.json\n  ├── claude-code-action-grype.json\n  └── ...\n\n\n7. run()\nPropósito: Método principal que coordina el análisis de todos los repositorios.\nLógica:\ndef run(self):\n    # 1. Descubrir repositorios\n    repositorios = self.discover_repositories()\n    \n    # 2. Para cada repositorio:\n    for indice, repo_path in enumerate(repositorios, start=1):\n        # Log de progreso: [1/3] Scanning data/repos/opencode...\n        LOGGER.info(f\"[{indice}/{len(repositorios)}] ...\")\n        \n        if self.dry_run:\n            # Mostrar qué se haría sin ejecutar\n            continue\n        \n        try:\n            # 3. Ejecutar análisis\n            grype_output = self.run_grype(repo_path)\n            \n            # 4. Procesar resultados\n            analysis = self.parse_grype_output(grype_output)\n            \n            # 5. Guardar ambos formatos\n            self.save_analysis(ruta_repo.name, grype_output, analysis)\n            \n            repositorios_analizados += 1\n        except Exception as error:\n            # Manejar errores, limpiar, y continuar\n            errores += 1\n            self._eliminar_archivos_parciales(ruta_repo.name)\n            LOGGER.error(f\"Error scanning {repo_path}: {error}\")\n    \n    # 6. Resumen final\n    LOGGER.info(f\"Summary | total_repos={len(repos)} | ...\")\nSalida típica:\nINFO | [1/3] Scanning data/repos/claude-code-action with Grype...\nINFO | Manifests found in claude-code-action: package.json, package-lock.json\nINFO | Running Grype on claude-code-action...\nINFO | Found 0 matches in Grype output\nINFO | Raw Grype output saved to data/results/claude-code-action-grype-raw.json\nINFO | Normalized analysis saved to data/results/claude-code-action-grype.json\nINFO | [2/3] Scanning data/repos/opencode with Grype...\nINFO | Manifests found in opencode: package.json, package-lock.json, yarn.lock\nINFO | Found 45 matches in Grype output\nINFO | ...\nINFO | Summary | total_repos=3 | repos_scanned=3 | files_generated=6 | errors=0",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Grype Script Detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_grype.html#manejo-de-errores",
+    "href": "vuln/explicacion_script_grype.html#manejo-de-errores",
+    "title": "Grype Script Detallado",
+    "section": "Manejo de Errores",
+    "text": "Manejo de Errores\n\nNiveles de Validación\n\nDirectorios:\n\n_validar_directorio_repos(): Verifica que data/repos/ existe y es directorio\n_validar_directorio_salida(): Verifica que ruta de salida es válida\n\nRepositorio Individual:\n\nExiste: FileNotFoundError\nEs directorio: NotADirectoryError\nNo está vacío: ValueError\n\nAnálisis:\n\nGrype instalado: RuntimeError con mensaje instructivo\nGrype ejecutable: RuntimeError si falla subprocess\nJSON válido: RuntimeError si output no es parseable\n\n\n\n\nRecuperación de Errores\ntry:\n    # Intentar análisis\n    grype_output = self.run_grype(repo_path)\nexcept Exception as error:\n    # 1. Limpiar archivos parciales\n    self._eliminar_archivos_parciales(ruta_repo.name)\n    \n    # 2. Registrar error\n    LOGGER.error(f\"Error: {error}\")\n    \n    # 3. Continuar con siguiente repo\n    errores += 1",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Grype Script Detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_grype.html#uso-del-script",
+    "href": "vuln/explicacion_script_grype.html#uso-del-script",
+    "title": "Grype Script Detallado",
+    "section": "Uso del Script",
+    "text": "Uso del Script\n\nEjecución Básica\npython scripts/generate_grype.py\n\n\nVista Previa sin Ejecutar (Dry-run)\npython scripts/generate_grype.py --dry-run\nSalida:\nINFO | [1/3] Dry-run: would scan data/repos/claude-code-action\nINFO | [2/3] Dry-run: would scan data/repos/genai-code-review\nINFO | [3/3] Dry-run: would scan data/repos/opencode\n\n\nCon Rutas Personalizadas\npython scripts/generate_grype.py \\\n  --repos-path /path/to/repos \\\n  --output-path /path/to/output\n\n\nDiagnóstico del Entorno\npython scripts/generate_grype.py --diagnose\n\n\nArgumentos\n\n--repos-path: Directorio con repositorios (default: data/repos)\n--output-path: Directorio de salida (default: data/results)\n--dry-run: Mostrar qué se haría sin ejecutar\n--diagnose: Verificar disponibilidad de Grype y su DB",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Grype Script Detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_grype.html#esquema-de-salida-json",
+    "href": "vuln/explicacion_script_grype.html#esquema-de-salida-json",
+    "title": "Grype Script Detallado",
+    "section": "Esquema de Salida JSON",
+    "text": "Esquema de Salida JSON\n\nArchivo Normalizado: {repo}-grype.json\n{\n  \"total_vulnerabilities\": 45,\n  \"vulnerabilities_by_severity\": {\n    \"critical\": 2,\n    \"high\": 8,\n    \"medium\": 20,\n    \"low\": 15\n  },\n  \"vulnerabilities\": [\n    {\n      \"package_name\": \"lodash\",\n      \"current_version\": \"4.17.20\",\n      \"vuln_id\": \"CVE-2021-23337\",\n      \"vuln_severity\": \"high\",\n      \"fix_version\": \"4.17.21\",\n      \"message\": \"Prototype pollution vulnerability in lodash library\",\n      \"cwe\": \"CWE-1321\",\n      \"cvss_score\": 7.4,\n      \"type\": \"vulnerability\"\n    },\n    {\n      \"package_name\": \"express\",\n      \"current_version\": \"4.16.2\",\n      \"vuln_id\": \"CVE-2022-24999\",\n      \"vuln_severity\": \"medium\",\n      \"fix_version\": \"4.18.1\",\n      \"message\": \"Denial of Service via regular expression in Express query parser\",\n      \"cwe\": \"CWE-1333\",\n      \"cvss_score\": 5.3,\n      \"type\": \"vulnerability\"\n    }\n  ],\n  \"grype_metadata\": {\n    \"grype_version\": \"2.1.0\",\n    \"db_location\": \"/home/user/.grype/db\",\n    \"scanned_path\": \"/home/user/project/data/repos/opencode\"\n  }\n}\n\n\nArchivo Raw (Debug): {repo}-grype-raw.json\nContiene la salida original de Grype sin procesamiento. Útil para: - Debug visual y verificación - Análisis directo del formato de Grype - Referencia de estructura completa\nEjemplo snippet:\n{\n  \"formatVersion\": \"2.1.0\",\n  \"source\": {\n    \"target\": \"/home/user/project/data/repos/opencode\",\n    \"type\": \"directory\",\n    \"dbPath\": \"/home/user/.grype/db\"\n  },\n  \"matches\": [\n    {\n      \"vulnerability\": {\n        \"id\": \"CVE-2021-23337\",\n        \"description\": \"Prototype pollution...\",\n        \"cvssV3\": { \"score\": 7.4 }\n      },\n      \"artifact\": {\n        \"name\": \"lodash\",\n        \"version\": \"4.17.20\"\n      }\n    }\n  ]\n}",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Grype Script Detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_grype.html#resumen-scriptsgenerate_grype.py",
+    "href": "vuln/explicacion_script_grype.html#resumen-scriptsgenerate_grype.py",
+    "title": "Grype Script Detallado",
+    "section": "Resumen: scripts/generate_grype.py",
+    "text": "Resumen: scripts/generate_grype.py\nEl archivo generate_grype.py implementa un scanner de vulnerabilidades robusto que:\n\nDescubre automáticamente múltiples repositorios\nDetecta manifests de dependencias (package.json, requirements.txt, pom.xml, etc)\nEjecuta Grype CLI para encontrar vulnerabilidades\nNormaliza salida JSON a formato consistente\nGuarda dos versiones: raw (debug) y normalizado (análisis)\nManeja errores elegantemente y continúa procesando\nProporciona resumen de estadísticas de vulnerabilidades",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Grype Script Detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/caso_litellm.html",
+    "href": "vuln/caso_litellm.html",
+    "title": "Caso de Estudio: LiteLLM y Cadena de Suministro",
+    "section": "",
+    "text": "El compromiso de LiteLLM en PyPI es un caso especialmente útil para estudiar vulnerabilidades y seguridad de la cadena de suministro porque muestra cómo un incidente no siempre comienza con una falla clásica en el código de una aplicación. En este caso, el problema relevante estuvo en la confianza depositada en la cadena de publicación y en herramientas del ecosistema de desarrollo, lo que permitió distribuir versiones maliciosas de un paquete legítimo.\nDesde una perspectiva formativa, este caso ayuda a entender que la seguridad del software no depende solo de revisar bibliotecas vulnerables, sino también de proteger procesos de integración continua, credenciales de publicación, mecanismos automáticos de instalación y herramientas que operan con amplios permisos sobre entornos de desarrollo o despliegue.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Caso de Estudio: LiteLLM y Cadena de Suministro"
+    ]
+  },
+  {
+    "objectID": "vuln/caso_litellm.html#por-qué-este-caso-es-valioso",
+    "href": "vuln/caso_litellm.html#por-qué-este-caso-es-valioso",
+    "title": "Caso de Estudio: LiteLLM y Cadena de Suministro",
+    "section": "",
+    "text": "El compromiso de LiteLLM en PyPI es un caso especialmente útil para estudiar vulnerabilidades y seguridad de la cadena de suministro porque muestra cómo un incidente no siempre comienza con una falla clásica en el código de una aplicación. En este caso, el problema relevante estuvo en la confianza depositada en la cadena de publicación y en herramientas del ecosistema de desarrollo, lo que permitió distribuir versiones maliciosas de un paquete legítimo.\nDesde una perspectiva formativa, este caso ayuda a entender que la seguridad del software no depende solo de revisar bibliotecas vulnerables, sino también de proteger procesos de integración continua, credenciales de publicación, mecanismos automáticos de instalación y herramientas que operan con amplios permisos sobre entornos de desarrollo o despliegue.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Caso de Estudio: LiteLLM y Cadena de Suministro"
+    ]
+  },
+  {
+    "objectID": "vuln/caso_litellm.html#resumen-general-del-incidente",
+    "href": "vuln/caso_litellm.html#resumen-general-del-incidente",
+    "title": "Caso de Estudio: LiteLLM y Cadena de Suministro",
+    "section": "Resumen general del incidente",
+    "text": "Resumen general del incidente\nDiversos análisis públicos reportaron que el 24 de marzo de 2026 se publicaron en PyPI dos versiones maliciosas de litellm, 1.82.7 y 1.82.8. La publicación no correspondía a un paquete falso o imitador, sino a versiones comprometidas del proyecto real, lo que convierte este incidente en un ejemplo claro de ataque a la cadena de suministro.\nLos reportes coinciden en que el caso se relaciona con una campaña más amplia atribuida al actor TeamPCP, que ya había comprometido otras piezas del ecosistema, incluyendo herramientas y componentes asociados a flujos de CI/CD. Esto vuelve al caso particularmente interesante, porque muestra cómo el acceso robado en una etapa puede reutilizarse para comprometer proyectos distintos en pocos días.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Caso de Estudio: LiteLLM y Cadena de Suministro"
+    ]
+  },
+  {
+    "objectID": "vuln/caso_litellm.html#qué-hacía-el-paquete-malicioso",
+    "href": "vuln/caso_litellm.html#qué-hacía-el-paquete-malicioso",
+    "title": "Caso de Estudio: LiteLLM y Cadena de Suministro",
+    "section": "¿Qué hacía el paquete malicioso?",
+    "text": "¿Qué hacía el paquete malicioso?\nLas fuentes consultadas describen que las versiones afectadas incorporaban mecanismos de ejecución maliciosa con dos variantes principales. En una de ellas, el código se activaba cuando la aplicación utilizaba partes específicas del paquete. En la otra, más riesgosa, el paquete incluía un archivo .pth que permitía ejecutar código automáticamente al iniciar el intérprete de Python.\nEse detalle es especialmente relevante, porque transforma la instalación del paquete en un evento de alto impacto: no era necesario esperar a que una funcionalidad compleja fuese invocada si el mecanismo de inicialización ya habilitaba la ejecución del payload.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Caso de Estudio: LiteLLM y Cadena de Suministro"
+    ]
+  },
+  {
+    "objectID": "vuln/caso_litellm.html#impacto-observado",
+    "href": "vuln/caso_litellm.html#impacto-observado",
+    "title": "Caso de Estudio: LiteLLM y Cadena de Suministro",
+    "section": "Impacto observado",
+    "text": "Impacto observado\nLos análisis públicos describen capacidades de recolección de credenciales, exfiltración de datos, mecanismos de persistencia y actividad orientada a contenedores o entornos Kubernetes. En términos prácticos, esto implica que el impacto potencial iba mucho más allá de una simple modificación del paquete: cualquier entorno que hubiese instalado las versiones comprometidas debía tratarse como potencialmente expuesto.\nPor eso, este caso también enseña una lección importante de respuesta a incidentes: cuando un paquete de uso real aparece comprometido en la cadena de suministro, el problema no se resuelve únicamente con “actualizar de versión”. En muchos casos, corresponde investigar persistencia, rotar credenciales, revisar actividad de red y analizar qué información pudo haber quedado expuesta.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Caso de Estudio: LiteLLM y Cadena de Suministro"
+    ]
+  },
+  {
+    "objectID": "vuln/caso_litellm.html#relación-con-mitre-attck",
+    "href": "vuln/caso_litellm.html#relación-con-mitre-attck",
+    "title": "Caso de Estudio: LiteLLM y Cadena de Suministro",
+    "section": "Relación con MITRE ATT&CK",
+    "text": "Relación con MITRE ATT&CK\nEste caso conversa muy bien con MITRE ATT&CK, porque varias de las conductas descritas en los análisis públicos pueden mapearse a técnicas conocidas. Entre ellas destacan:\n\nT1546.018 - Python Startup Hooks, por el uso de archivos .pth para ejecutar código al iniciar Python.\nT1003 - OS Credential Dumping, por la recolección de material sensible y credenciales en el sistema.\nT1610 - Deploy Container, por la relación del caso con actividad orientada a despliegue y abuso de contenedores en entornos Kubernetes.\n\nEste tipo de mapeo no reemplaza el análisis del incidente, pero sí ayuda a conectarlo con una taxonomía de comportamiento adversario ampliamente utilizada en investigación, detección y threat hunting.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Caso de Estudio: LiteLLM y Cadena de Suministro"
+    ]
+  },
+  {
+    "objectID": "vuln/caso_litellm.html#lecciones-para-el-módulo",
+    "href": "vuln/caso_litellm.html#lecciones-para-el-módulo",
+    "title": "Caso de Estudio: LiteLLM y Cadena de Suministro",
+    "section": "Lecciones para el módulo",
+    "text": "Lecciones para el módulo\nEste caso de estudio aporta varias lecciones útiles para la sección de vulnerabilidades. Primero, muestra que no todas las amenazas relevantes aparecen como una vulnerabilidad clásica con una remediación trivial. Segundo, evidencia que herramientas de seguridad, automatización y despliegue también forman parte de la superficie de riesgo. Tercero, recuerda que los entornos con secretos, credenciales de nube y acceso a clústeres son especialmente atractivos para actores que buscan maximizar impacto.\nPara el trabajo del módulo, esto ayuda a complementar el uso de herramientas como CodeQL y Grype. El análisis de código y de dependencias sigue siendo importante, pero debe convivir con una mirada más amplia sobre integridad del pipeline, publicación de paquetes, monitoreo de comportamientos anómalos y respuesta a incidentes de cadena de suministro.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Caso de Estudio: LiteLLM y Cadena de Suministro"
+    ]
+  },
+  {
+    "objectID": "vuln/caso_litellm.html#lista-de-referencias",
+    "href": "vuln/caso_litellm.html#lista-de-referencias",
+    "title": "Caso de Estudio: LiteLLM y Cadena de Suministro",
+    "section": "Lista de Referencias",
+    "text": "Lista de Referencias\n\nHow a Poisoned Security Scanner Became the Key to Backdooring LiteLLM\nCompromised litellm PyPI Package Delivers Multi-Stage Credential Stealer\nLiteLLM and Telnyx compromised on PyPI: Tracing the TeamPCP supply chain campaign\nMITRE ATT&CK\nEvent Triggered Execution: Python Startup Hooks (T1546.018)\nOS Credential Dumping (T1003)\nDeploy Container (T1610)",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Caso de Estudio: LiteLLM y Cadena de Suministro"
+    ]
+  },
+  {
+    "objectID": "vuln/introduccion_vulnerabilidades.html",
+    "href": "vuln/introduccion_vulnerabilidades.html",
+    "title": "Introducción Vulnerabilidades",
+    "section": "",
+    "text": "La seguridad puede entenderse como la aplicación y ejecución de políticas por medio de mecanismos de defensa sobre datos y recursos. En esa misma línea, la seguridad de software se enfoca en evaluar, mejorar, hacer cumplir y comprobar propiedades de seguridad del software, con el fin de permitir su uso intencionado y evitar usos no previstos que puedan causar daño.\nDentro de ese marco, es importante distinguir entre bug y vulnerabilidad. Un bug es una falla en un programa o sistema que produce un resultado inesperado. Una vulnerabilidad, en cambio, es una debilidad del software que permite que un atacante aproveche una falla para escalar privilegios, alterar el estado del sistema, filtrar información o ejecutar acciones no autorizadas. Para que exista una vulnerabilidad explotable, deben darse al menos tres condiciones: que el sistema sea susceptible a la falla, que el adversario tenga acceso a ella y que cuente con la capacidad de explotarla.\nEsta distinción es importante porque no todo error de software se transforma automáticamente en un problema de seguridad. Para que una falla pase a ser relevante desde el punto de vista defensivo, debe existir una ruta realista mediante la cual un atacante pueda convertir ese defecto en una ventaja operativa.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Introducción Vulnerabilidades"
+    ]
+  },
+  {
+    "objectID": "vuln/introduccion_vulnerabilidades.html#qué-entendemos-por-vulnerabilidad",
+    "href": "vuln/introduccion_vulnerabilidades.html#qué-entendemos-por-vulnerabilidad",
+    "title": "Introducción Vulnerabilidades",
+    "section": "",
+    "text": "La seguridad puede entenderse como la aplicación y ejecución de políticas por medio de mecanismos de defensa sobre datos y recursos. En esa misma línea, la seguridad de software se enfoca en evaluar, mejorar, hacer cumplir y comprobar propiedades de seguridad del software, con el fin de permitir su uso intencionado y evitar usos no previstos que puedan causar daño.\nDentro de ese marco, es importante distinguir entre bug y vulnerabilidad. Un bug es una falla en un programa o sistema que produce un resultado inesperado. Una vulnerabilidad, en cambio, es una debilidad del software que permite que un atacante aproveche una falla para escalar privilegios, alterar el estado del sistema, filtrar información o ejecutar acciones no autorizadas. Para que exista una vulnerabilidad explotable, deben darse al menos tres condiciones: que el sistema sea susceptible a la falla, que el adversario tenga acceso a ella y que cuente con la capacidad de explotarla.\nEsta distinción es importante porque no todo error de software se transforma automáticamente en un problema de seguridad. Para que una falla pase a ser relevante desde el punto de vista defensivo, debe existir una ruta realista mediante la cual un atacante pueda convertir ese defecto en una ventaja operativa.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Introducción Vulnerabilidades"
+    ]
+  },
+  {
+    "objectID": "vuln/introduccion_vulnerabilidades.html#por-qué-importa-estudiar-vulnerabilidades",
+    "href": "vuln/introduccion_vulnerabilidades.html#por-qué-importa-estudiar-vulnerabilidades",
+    "title": "Introducción Vulnerabilidades",
+    "section": "¿Por qué importa estudiar vulnerabilidades?",
+    "text": "¿Por qué importa estudiar vulnerabilidades?\nEstudiar vulnerabilidades importa porque la seguridad de un sistema no depende solo de sus funciones, sino también de la capacidad de resistir usos no autorizados. Defender software es difícil porque el atacante necesita encontrar una sola vía efectiva de entrada, mientras que quien defiende debe bloquear todas las rutas de ataque que sean factibles dentro de un modelo de amenazas dado.\nPor eso, la identificación temprana de vulnerabilidades es una práctica central para reducir riesgo técnico y operativo. Una debilidad no detectada puede abrir la puerta a filtraciones de información, alteraciones indebidas del sistema, interrupciones de servicio o escalamiento de privilegios. Además, mientras más tarde se detecta un problema de seguridad, más costosa suele ser su corrección y mayor puede ser su impacto sobre usuarios, organizaciones y equipos de desarrollo.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Introducción Vulnerabilidades"
+    ]
+  },
+  {
+    "objectID": "vuln/introduccion_vulnerabilidades.html#vulnerabilidades-y-modelo-de-amenazas",
+    "href": "vuln/introduccion_vulnerabilidades.html#vulnerabilidades-y-modelo-de-amenazas",
+    "title": "Introducción Vulnerabilidades",
+    "section": "Vulnerabilidades y modelo de amenazas",
+    "text": "Vulnerabilidades y modelo de amenazas\nEl concepto de modelo de amenazas funciona como una herramienta para enumerar y priorizar los riesgos que comprometen la seguridad de un sistema. En términos prácticos, esto obliga a preguntarse qué activos son valiosos, qué componentes son más expuestos y cuáles son las amenazas más relevantes según el contexto de uso.\nEsta idea es especialmente útil al estudiar vulnerabilidades, porque permite pasar de una noción abstracta de “falla” a una evaluación más concreta del riesgo. Una misma debilidad puede tener implicancias muy distintas dependiendo de quién puede alcanzarla, qué capacidades tiene el atacante y qué efecto produce sobre la confidencialidad, integridad o disponibilidad del sistema.\nComo referencia conceptual general para estas nociones, resulta útil revisar seguridad.pdf, especialmente en lo relativo a seguridad de software, modelo de amenazas y distinción entre bugs y vulnerabilidades.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Introducción Vulnerabilidades"
+    ]
+  },
+  {
+    "objectID": "vuln/introduccion_vulnerabilidades.html#vulnerabilidades-severidad-y-gestión-del-riesgo",
+    "href": "vuln/introduccion_vulnerabilidades.html#vulnerabilidades-severidad-y-gestión-del-riesgo",
+    "title": "Introducción Vulnerabilidades",
+    "section": "Vulnerabilidades, severidad y gestión del riesgo",
+    "text": "Vulnerabilidades, severidad y gestión del riesgo\nNo todas las vulnerabilidades tienen la misma criticidad. Su gravedad depende de factores como la facilidad de explotación, el impacto esperado, el contexto del sistema afectado y la existencia o no de medidas compensatorias. Por eso, además de detectar hallazgos, resulta necesario priorizarlos. Conceptos como severidad, riesgo y remediación son parte central del trabajo de análisis, ya que permiten distinguir entre problemas urgentes, mejoras importantes y observaciones de menor impacto inmediato.\nDesde una perspectiva formativa, esto implica comprender que el análisis de vulnerabilidades no termina al producir un reporte. El valor real aparece cuando esos resultados se interpretan, se conectan con el contexto del proyecto y se transforman en decisiones concretas de corrección, seguimiento o mitigación.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Introducción Vulnerabilidades"
+    ]
+  },
+  {
+    "objectID": "vuln/introduccion_vulnerabilidades.html#relación-con-este-módulo",
+    "href": "vuln/introduccion_vulnerabilidades.html#relación-con-este-módulo",
+    "title": "Introducción Vulnerabilidades",
+    "section": "Relación con este módulo",
+    "text": "Relación con este módulo\nEn este módulo, el tema se aborda desde dos ángulos complementarios. Por una parte, se revisa el análisis estático de código con herramientas como CodeQL para detectar problemas de seguridad directamente en los repositorios. Por otra, se examinan vulnerabilidades conocidas presentes en dependencias y componentes utilizados por esos proyectos con herramientas como Grype. De ese modo, el material no se limita a mostrar herramientas, sino que permite entender que una estrategia de seguridad razonable necesita observar tanto el código propio como el ecosistema de software del que depende.\nLos notebooks posteriores desarrollan esa idea de manera aplicada. Algunos se enfocan en la ejecución de análisis y en la inspección de resultados; otros documentan la lógica de los scripts que automatizan esos flujos. Esta introducción, en cambio, busca entregar el marco conceptual mínimo para comprender por qué esos análisis son relevantes y qué tipo de preguntas ayudan a responder dentro de un proceso de desarrollo seguro.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Introducción Vulnerabilidades"
+    ]
+  },
+  {
+    "objectID": "vuln/introduccion_vulnerabilidades.html#lista-de-referencias",
+    "href": "vuln/introduccion_vulnerabilidades.html#lista-de-referencias",
+    "title": "Introducción Vulnerabilidades",
+    "section": "Lista de Referencias",
+    "text": "Lista de Referencias\n\nCodeQL Documentation\nGrype Getting Started",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Introducción Vulnerabilidades"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Ingeniería de Datos - 2026",
+    "section": "",
+    "text": "Apuntes del curso de Ingeniería de Datos\nBienvenido/a al repositorio de ID_2026.\nEste proyecto está completamente preconfigurado con un Dev Container en Visual Studio Code que incluye todas las herramientas necesarias para análisis de seguridad (SBOM, CodeQL y Grype).",
+    "crumbs": [
+      "Ingeniería de Datos - 2026"
+    ]
+  },
+  {
+    "objectID": "index.html#requisitos-previos",
+    "href": "index.html#requisitos-previos",
+    "title": "Ingeniería de Datos - 2026",
+    "section": "📋 Requisitos Previos",
+    "text": "📋 Requisitos Previos\nAntes de comenzar, asegúrate de tener instalados:\n\n\n\nHerramienta\nEnlace\nNota\n\n\n\n\nDocker\nhttps://www.docker.com/get-started\nDebe estar corriendo en tu sistema\n\n\nVisual Studio Code\nhttps://code.visualstudio.com/\nEditor recomendado\n\n\nDev Containers Extension\nExtensión\nNecesaria para abrir el Dev Container\n\n\n\n\n✅ Verificar Docker\nAbre una terminal y verifica que Docker está correctamente instalado:\ndocker --version\ndocker run hello-world\nDeberías ver la versión de Docker y un mensaje de éxito.",
+    "crumbs": [
+      "Ingeniería de Datos - 2026"
+    ]
+  },
+  {
+    "objectID": "index.html#inicio-rápido-5-10-minutos",
+    "href": "index.html#inicio-rápido-5-10-minutos",
+    "title": "Ingeniería de Datos - 2026",
+    "section": "🚀 Inicio Rápido (5-10 minutos)",
+    "text": "🚀 Inicio Rápido (5-10 minutos)\n\nPaso 1: Clonar el repositorio\ngit clone https://github.com/dci-courses/id_2026.git\ncd id_2026\n\n\nPaso 2: Abrir en VS Code\ncode .\n\n\nPaso 3: Reconstruir y Abrir el Dev Container\nUna vez que VS Code esté abierto:\n\nPresiona Ctrl + Shift + P (Windows/Linux) o Cmd + Shift + P (Mac)\nEscribe: Dev Containers: Rebuild and Reopen in Container\nSelecciona la opción y presiona Enter\n\nEsto iniciará el proceso de construcción del contenedor.\n\n\nPaso 4: Esperar a la Construcción ⏳\nDurante la construcción, se realizarán:\n\n✅ Instalación de dependencias Python\n✅ Configuración de Jupyter Kernel\n✅ Descarga de CodeQL query packs\n✅ Actualización de BD de Grype\n✅ Verificación de herramientas\n\nEsto puede tomar 3-10 minutos la primera vez. Ten paciencia y no cierres VS Code.\nVerás mensajes en la terminal indicando el progreso:\nBuilding image...\n[... logs del proceso ...]\nSuccessfully built container\n\n\nPaso 5: Archivo de Bienvenida\nDespués de la construcción, se abrirá automáticamente WELCOME.md con:\n\n📚 Guía completa del proyecto\n🚀 Instrucciones de uso\n📊 Descripción de scripts disponibles\n❓ Solución de problemas comunes\n\nSi no se abre automáticamente, puedes abrirlo manualmente: - Presiona Ctrl + O - Busca WELCOME.md\n\n\nPaso 6: Configura el kernel de Jupyter\n\nAbre cualquier notebook .ipynb\nAl ejecutar una celda por primera vez, selecciona el kernel: Python (ingenieria-datos)",
+    "crumbs": [
+      "Ingeniería de Datos - 2026"
+    ]
+  },
+  {
+    "objectID": "index.html#qué-se-instala-automáticamente",
+    "href": "index.html#qué-se-instala-automáticamente",
+    "title": "Ingeniería de Datos - 2026",
+    "section": "⚙️ Qué Se Instala Automáticamente",
+    "text": "⚙️ Qué Se Instala Automáticamente\nEl Dev Container preinstala automáticamente:\n\n🐍 Python y Herramientas\n\n\n\nHerramienta\nVersión\nUso\n\n\n\n\nPython\n3.11\nLenguaje base\n\n\nuv\nLatest\nGestor de dependencias (más rápido que pip)\n\n\nJupyter\nLatest\nNotebooks interactivos\n\n\nPandas\nLatest\nAnálisis de datos\n\n\n\n\n\n🔐 Herramientas de Seguridad\n\n\n\n\n\n\n\n\nHerramienta\nVersión\nUso\n\n\n\n\nCodeQL CLI\n2.25.1\nAnálisis estático de seguridad (vulnerabilidades en código)\n\n\nGrype\nLatest\nEscaneo de vulnerabilidades en dependencias\n\n\nSyft\nLatest\nGeneración de SBOMs (inventario de componentes)\n\n\nNode.js\n20\nNecesario para análisis JavaScript con CodeQL\n\n\n\n\n\n📦 Query Packs de CodeQL\nSe descargan automáticamente: - codeql/python-queries - Análisis de Python - codeql/javascript-queries - Análisis de JavaScript/TypeScript - codeql/java-queries - Análisis de Java",
+    "crumbs": [
+      "Ingeniería de Datos - 2026"
+    ]
+  },
+  {
+    "objectID": "index.html#después-de-abrir-el-contenedor",
+    "href": "index.html#después-de-abrir-el-contenedor",
+    "title": "Ingeniería de Datos - 2026",
+    "section": "✨ Después de Abrir el Contenedor",
+    "text": "✨ Después de Abrir el Contenedor\n\n1. Verificar que Todo Funciona\nAbre una terminal en VS Code (Ctrl + ``) y ejecuta:\nuv run scripts/generate_codeql.py --diagnose\nuv run scripts/generate_grype.py --diagnose\nDeberías ver:\n✓ CodeQL CLI: CodeQL version 2.25.1\n✓ Grype CLI: Grype version X.X.X\n✓ Node.js: v20.x.x\n✓ npm: x.x.x\n✓ Query pack codeql/python-queries disponible\n✓ Query pack codeql/javascript-queries disponible\n✓ Grype DB status: Database ready\n\n\n2. Explorar el Proyecto\nLee el contenido de: - WELCOME.md: Guía general del proyecto - nbs/sbom/generacion_sbom.ipynb: Notebook para generar SBOMs - nbs/vuln/generacion_codeql.ipynb: Notebook para ejecutar análisis estático (CodeQL) - nbs/vuln/generacion_grype.ipynb: Notebook para escanear vulnerabilidades en dependencias (Grype)\n\n\n3. Ejecutar tu Primer Análisis\nIdealmente puedes realizar el proceso a través de los notebooks para la mejor experiencia, sin embargo, también puedes ejecutar los archivos de forma individual.\nDesde la terminal:\n# Generar SBOMs para los repositorios\nuv run scripts/generate_sboms.py\n\n# Ejecutar análisis de seguridad estático con CodeQL\nuv run scripts/generate_codeql.py\n\n# Escanear vulnerabilidades en dependencias con Grype\nuv run scripts/generate_grype.py\nLos resultados se guardarán en data/results/",
+    "crumbs": [
+      "Ingeniería de Datos - 2026"
+    ]
+  },
+  {
+    "objectID": "index.html#estructura-del-proyecto",
+    "href": "index.html#estructura-del-proyecto",
+    "title": "Ingeniería de Datos - 2026",
+    "section": "🧭 Estructura del Proyecto",
+    "text": "🧭 Estructura del Proyecto\nid_2026/\n├── data/\n│   ├── repos/              # Repositorios a analizar\n│   ├── results/            # Resultados de análisis (JSON)\n│   └── repos.json          # Configuración de repositorios\n├── nbs/                    # Notebooks Jupyter\n│   ├── sbom/               # Análisis de SBOMs\n│   └── vuln/               # Análisis de vulnerabilidades\n│       ├── generacion_codeql.ipynb          # Análisis estático\n│       ├── explicacion_script_codeql.ipynb\n│       ├── generacion_grype.ipynb           # Escaneo de dependencias\n│       └── explicacion_script_grype.ipynb\n├── scripts/                # Automatización\n│   ├── generate_sboms.py\n│   ├── generate_codeql.py\n│   ├── generate_grype.py\n│   └── add_submodules.py\n├── .devcontainer/          # Configuración del Dev Container\n├── README.md               # Será generado automáticamente\n└── WELCOME.md              # Guía general (se abre automáticamente)",
+    "crumbs": [
+      "Ingeniería de Datos - 2026"
+    ]
+  },
+  {
+    "objectID": "index.html#solución-de-problemas",
+    "href": "index.html#solución-de-problemas",
+    "title": "Ingeniería de Datos - 2026",
+    "section": "🐛 Solución de Problemas",
+    "text": "🐛 Solución de Problemas\n\n❌ “Dev Containers extension not found”\nSolución: Instala la extensión desde el Marketplace de VS Code - Presiona Ctrl + Shift + X - Busca “Dev Containers” - Instala la extensión oficial de Microsoft\n\n\n❌ “Docker daemon is not running”\nSolución: Asegúrate de que Docker Desktop esté abierto - Windows: Abre Docker Desktop desde el menú Inicio - Mac: Abre Docker Desktop desde Applications - Linux: Ejecuta sudo systemctl start docker\n\n\n❌ “La construcción del contenedor es muy lenta”\nNormal para la primera vez (puede tomar 5-10 minutos) - Se descargan imágenes base - Se compilan herramientas como CodeQL - Se descarga la BD de Grype - Próximas aperturas serán mucho más rápidas\n\n\n❌ “Python kernel no aparece en Jupyter”\nSolución: Reinicia el kernel manualmente 1. Abre un notebook .ipynb 2. Presiona Ctrl + Shift + P 3. Selecciona Jupyter: Select Kernel 4. Elige Python (ingenieria-datos)\n\n\n❌ “CodeQL análisis falla”\nEjecuta el diagnóstico:\nuv run scripts/generate_codeql.py --diagnose\nVerifica que todos los componentes tengan ✓\n\n\n❌ “Grype análisis falla”\nEjecuta el diagnóstico:\nuv run scripts/generate_grype.py --diagnose\nVerifica que Grype CLI y su BD estén disponibles",
+    "crumbs": [
+      "Ingeniería de Datos - 2026"
+    ]
+  },
+  {
+    "objectID": "index.html#tips-útiles",
+    "href": "index.html#tips-útiles",
+    "title": "Ingeniería de Datos - 2026",
+    "section": "💡 Tips Útiles",
+    "text": "💡 Tips Útiles\n\nPrimeros comandos después de abrir el contenedor:\n# Ver qué repositorios están listos para analizar\nls data/repos/\n\n# Ver resultados previos\nls data/results/\nAgregar nuevos repositorios:\n\nEdita data/repos.json\nEjecuta: uv run scripts/add_submodules.py && git submodule update --init --recursive\nCorre los análisis nuevamente\n\nReconstruir el contenedor si necesitas actualizar dependencias:\n\nCtrl + Shift + P → Dev Containers: Rebuild Container\n\nAcceder a la terminal dentro del contenedor:\n\n`Ctrl + `` para abrir la terminal integrada",
+    "crumbs": [
+      "Ingeniería de Datos - 2026"
+    ]
+  },
+  {
+    "objectID": "index.html#próximos-pasos",
+    "href": "index.html#próximos-pasos",
+    "title": "Ingeniería de Datos - 2026",
+    "section": "📚 Próximos Pasos",
+    "text": "📚 Próximos Pasos\n\nLee WELCOME.md para entender la estructura completa\nExplora los notebooks en nbs/ para ver ejemplos de uso\nEjecuta --diagnose para verificar herramientas\nCorre tu primer análisis con los repositorios incluidos",
+    "crumbs": [
+      "Ingeniería de Datos - 2026"
+    ]
+  },
+  {
+    "objectID": "index.html#necesitas-ayuda",
+    "href": "index.html#necesitas-ayuda",
+    "title": "Ingeniería de Datos - 2026",
+    "section": "❓ ¿Necesitas Ayuda?",
+    "text": "❓ ¿Necesitas Ayuda?\n\nConsulta WELCOME.md para instrucciones detalladas\nRevisa los notebooks para ejemplos paso a paso\nVerifica el diagnóstico: uv run scripts/generate_codeql.py --diagnose y uv run scripts/generate_grype.py --diagnose",
+    "crumbs": [
+      "Ingeniería de Datos - 2026"
+    ]
+  },
+  {
+    "objectID": "sbom/explicacion_script_sbom.html",
+    "href": "sbom/explicacion_script_sbom.html",
+    "title": "Script detallado",
+    "section": "",
+    "text": "Este documento describe la estructura y el funcionamiento del script scripts/generate_sboms.py. El propósito de este script es automatizar la creación de Software Bill of Materials (SBOMs) para un conjunto de repositorios de código utilizando la herramienta Syft.",
+    "crumbs": [
+      "SBOMs",
+      "Script detallado"
+    ]
+  },
+  {
+    "objectID": "sbom/explicacion_script_sbom.html#objetivo",
+    "href": "sbom/explicacion_script_sbom.html#objetivo",
+    "title": "Script detallado",
+    "section": "",
+    "text": "Este documento describe la estructura y el funcionamiento del script scripts/generate_sboms.py. El propósito de este script es automatizar la creación de Software Bill of Materials (SBOMs) para un conjunto de repositorios de código utilizando la herramienta Syft.",
+    "crumbs": [
+      "SBOMs",
+      "Script detallado"
+    ]
+  },
+  {
+    "objectID": "sbom/explicacion_script_sbom.html#importaciones-y-constantes",
+    "href": "sbom/explicacion_script_sbom.html#importaciones-y-constantes",
+    "title": "Script detallado",
+    "section": "1. Importaciones y Constantes",
+    "text": "1. Importaciones y Constantes\nEl script comienza importando las librerías necesarias y definiendo constantes clave que se usarán a lo largo del script. Esto centraliza la configuración y facilita su modificación.\nfrom __future__ import annotations\n\nimport argparse\nimport json\nimport logging\nimport re\nimport shutil\nimport subprocess\nfrom pathlib import Path\n\n\nRUTA_BASE_SBOMS = Path(__file__).resolve().parents[1]\nRUTA_REPOS_POR_DEFECTO = RUTA_BASE_SBOMS / \"data\" / \"repos\"\nRUTA_RESULTADOS_POR_DEFECTO = RUTA_BASE_SBOMS / \"data\" / \"results\"\nFORMATO_SALIDA_SYFT = \"syft-json\"\nSUFIJO_SBOM = \".json\"\nSUFIJOS_LEGADOS = (\".spdx.json\", \".cyclonedx.json\")\nMENSAJE_SYFT_NO_INSTALADO = (\n    \"Syft CLI is not installed. Please install it (e.g., `brew install syft`).\"\n)\n\n\nif not logging.getLogger().handlers:\n    logging.basicConfig(level=logging.INFO, format=\"%(levelname)s | %(message)s\")\nLOGGER = logging.getLogger(__name__)\nPATRON_ANSI = re.compile(r\"\\x1b\\[[0-9;?]*[ -/]*[@-~]\")",
+    "crumbs": [
+      "SBOMs",
+      "Script detallado"
+    ]
+  },
+  {
+    "objectID": "sbom/explicacion_script_sbom.html#la-clase-sbomgenerator",
+    "href": "sbom/explicacion_script_sbom.html#la-clase-sbomgenerator",
+    "title": "Script detallado",
+    "section": "2. La Clase SBOMGenerator",
+    "text": "2. La Clase SBOMGenerator\nEsta es la clase principal que encapsula toda la lógica para descubrir repositorios, generar SBOMs y guardarlos en disco.\n\n__init__\nEl constructor inicializa las rutas y otras variables de instancia. Guarda la ruta raíz del proyecto para poder trabajar con rutas relativas, lo que hace que los logs sean más limpios.\nclass SBOMGenerator:\n    def __init__(self, repos_path: str, output_path: str):\n        self.repos_path = Path(repos_path).expanduser().resolve()\n        self.output_path = Path(output_path).expanduser().resolve()\n        self.project_root = Path(__file__).resolve().parents[1]\n        self.syft_bin = \"syft\"\n        self.dry_run = False\n        self.syft_path: str | None = None\n\n\ndiscover_repositories\nEste método escanea el directorio data/repos y crea una lista ordenada de las rutas relativas de todos los subdirectorios que encuentra. Estas son las rutas a los repositorios que se analizarán.\n    def discover_repositories(self) -&gt; list[str]:\n        \"\"\"Devuelve una lista de rutas de repositorios.\"\"\"\n        self._validar_directorio_repos()\n\n        repositorios = sorted(\n            str(ruta.relative_to(self.project_root))\n            for ruta in self.repos_path.iterdir()\n            if ruta.is_dir()\n        )\n\n        if not repositorios:\n            LOGGER.warning(\"No se encontraron repositorios en %s\", self.repos_path)\n\n        return repositorios\n\n\ngenerate_sbom\nAquí ocurre la magia. El método toma la ruta de un repositorio, construye el comando syft apropiado y lo ejecuta como un subproceso. Captura la salida (el SBOM en formato JSON), la limpia de caracteres no deseados y la devuelve como una cadena de texto validada.\n    def generate_sbom(self, repo_path: str) -&gt; str:\n        \"\"\"Ejecuta Syft y devuelve el SBOM JSON nativo.\"\"\"\n        ruta_repo = self.project_root / repo_path\n\n        if not ruta_repo.exists():\n            raise FileNotFoundError(f\"El repositorio no existe: {ruta_repo}\")\n\n        if not ruta_repo.is_dir():\n            raise NotADirectoryError(f\"La ruta no es un directorio: {ruta_repo}\")\n\n        if not any(ruta_repo.iterdir()):\n            raise ValueError(f\"El repositorio esta vacio: {ruta_repo}\")\n\n        comando = self._construir_comando_syft(ruta_repo)\n        resultado = subprocess.run(\n            comando,\n            capture_output=True,\n            text=True,\n            check=False,\n        )\n\n        if resultado.returncode != 0:\n            detalle_error = resultado.stderr.strip() or \"Syft termino con un error desconocido.\"\n            raise RuntimeError(\n                f\"No fue posible generar el SBOM para {ruta_repo.name}: {detalle_error}\"\n            )\n\n        salida = self._normalizar_sbom_json(resultado.stdout)\n        if not salida.strip():\n            raise RuntimeError(f\"Syft no devolvio contenido para {ruta_repo.name}.\")\n\n        try:\n            json.loads(salida)\n        except json.JSONDecodeError as error:\n            raise RuntimeError(\n                f\"Syft devolvio un JSON invalido para {ruta_repo.name}.\"\n            ) from error\n\n        return salida\n\n\nsave_sbom\nUna vez generado el SBOM, este método se encarga de guardarlo en el disco, dentro del directorio data/results. El nombre del archivo se basa en el nombre del repositorio y se añade el sufijo .json.\n    def save_sbom(self, repo_name: str, sbom_data: str) -&gt; Path:\n        \"\"\"Guarda el SBOM en el directorio de salida.\"\"\"\n        if not repo_name:\n            raise ValueError(\"El nombre del repositorio no puede estar vacio.\")\n\n        self.output_path.mkdir(parents=True, exist_ok=True)\n        ruta_salida = self.output_path / f\"{repo_name}{SUFIJO_SBOM}\"\n        ruta_salida.write_text(sbom_data, encoding=\"utf-8\")\n        LOGGER.info(\"SBOM guardado en %s\", ruta_salida.relative_to(self.project_root))\n        return ruta_salida\n\n\nrun\nEste es el método orquestador que une todo. Llama a los otros métodos en secuencia para cada repositorio encontrado: descubre, valida, genera y guarda. También se encarga de la lógica de dry-run, manejo de errores y genera un resumen final con estadísticas.\n    def run(self):\n        \"\"\"Orquesta el descubrimiento y la generacion de SBOMs.\"\"\"\n        repositorios = self.discover_repositories()\n        self._validar_directorio_salida()\n\n        if not repositorios:\n            return\n\n        if not self.dry_run:\n            self.syft_path = self._resolver_syft()\n            LOGGER.info(\"Usando Syft CLI: %s\", self.syft_path)\n\n        self.output_path.mkdir(parents=True, exist_ok=True)\n\n        repositorios_generados = 0\n        archivos_generados = 0\n        omitidos = 0\n        errores = 0\n\n        for indice, repo_path in enumerate(repositorios, start=1):\n            ruta_repo = self.project_root / repo_path\n            LOGGER.info(\n                \"[%s/%s] Procesando repositorio %s\",\n                indice,\n                len(repositorios),\n                repo_path,\n            )\n\n            if self.dry_run:\n                if not any(ruta_repo.iterdir()):\n                    LOGGER.warning(\n                        \"[%s/%s] Se omite %s porque esta vacio.\",\n                        indice,\n                        len(repositorios),\n                        ruta_repo.name,\n                    )\n                    omitidos += 1\n                    continue\n\n                ruta_salida = self.output_path / f\"{ruta_repo.name}{SUFIJO_SBOM}\"\n                LOGGER.info(\n                    \"[%s/%s] Dry-run: se generaria %s\",\n                    indice,\n                    len(repositorios),\n                    ruta_salida.relative_to(self.project_root),\n                )\n                continue\n\n            try:\n                sbom_data = self.generate_sbom(repo_path)\n                self.save_sbom(ruta_repo.name, sbom_data)\n                self._eliminar_archivos_legados(ruta_repo.name)\n                repositorios_generados += 1\n                archivos_generados += 1\n            except Exception as error:\n                errores += 1\n                self._eliminar_archivos_parciales(ruta_repo.name)\n                LOGGER.error(\n                    \"[%s/%s] Error al procesar %s: %s\",\n                    indice,\n                    len(repositorios),\n                    repo_path,\n                    error,\n                )\n\n        LOGGER.info(\n            \"Resumen final | total_repos=%s | repos_generados=%s | archivos_generados=%s | omitidos=%s | errores=%s\",\n            len(repositorios),\n            repositorios_generados,\n            archivos_generados,\n            omitidos,\n            errores,\n        )",
+    "crumbs": [
+      "SBOMs",
+      "Script detallado"
+    ]
+  },
+  {
+    "objectID": "sbom/explicacion_script_sbom.html#métodos-auxiliares-privados",
+    "href": "sbom/explicacion_script_sbom.html#métodos-auxiliares-privados",
+    "title": "Script detallado",
+    "section": "3. Métodos Auxiliares Privados",
+    "text": "3. Métodos Auxiliares Privados\nEl script incluye varios métodos privados (prefijados con _) que realizan tareas específicas de validación, normalización y gestión de archivos.\n    def _validar_directorio_repos(self):\n        if not self.repos_path.exists():\n            raise FileNotFoundError(\n                f\"El directorio de repositorios no existe: {self.repos_path}\"\n            )\n\n        if not self.repos_path.is_dir():\n            raise NotADirectoryError(\n                f\"La ruta de repositorios no es un directorio: {self.repos_path}\"\n            )\n\n    def _resolver_syft(self) -&gt; str:\n        ruta_syft = shutil.which(self.syft_bin)\n        if not ruta_syft:\n            raise RuntimeError(MENSAJE_SYFT_NO_INSTALADO)\n\n        return ruta_syft\n\n    def _construir_comando_syft(self, ruta_repo: Path) -&gt; list[str]:\n        ruta_syft = self.syft_path or self._resolver_syft()\n        return [ruta_syft, f\"dir:{ruta_repo}\", \"-o\", FORMATO_SALIDA_SYFT]\n\n    def _normalizar_sbom_json(self, salida_cruda: str) -&gt; str:\n        \"\"\"Limpia ruido accidental y reserializa el resultado como JSON valido.\"\"\"\n        if not salida_cruda or not salida_cruda.strip():\n            return \"\"\n\n        texto_limpio = PATRON_ANSI.sub(\"\", salida_cruda).replace(\"\\ufeff\", \"\").strip()\n        candidatos = [texto_limpio]\n\n        inicio_objeto = texto_limpio.find(\"{\")\n        fin_objeto = texto_limpio.rfind(\"}\")\n        if inicio_objeto != -1 and fin_objeto != -1 and inicio_objeto &lt; fin_objeto:\n            candidatos.append(texto_limpio[inicio_objeto : fin_objeto + 1])\n\n        inicio_lista = texto_limpio.find(\"[\")\n        fin_lista = texto_limpio.rfind(\"]\")\n        if inicio_lista != -1 and fin_lista != -1 and inicio_lista &lt; fin_lista:\n            candidatos.append(texto_limpio[inicio_lista : fin_lista + 1])\n\n        for candidato in candidatos:\n            try:\n                contenido = json.loads(candidato)\n            except json.JSONDecodeError:\n                continue\n\n            return json.dumps(contenido, ensure_ascii=False, indent=2)\n\n        raise RuntimeError(\"Syft devolvio una salida que no pudo normalizarse a JSON valido.\")\n\n    def _eliminar_archivos_parciales(self, repo_name: str):\n        ruta_salida = self.output_path / f\"{repo_name}{SUFIJO_SBOM}\"\n        if ruta_salida.exists():\n            ruta_salida.unlink()\n\n    def _eliminar_archivos_legados(self, repo_name: str):\n        for sufijo in SUFIJOS_LEGADOS:\n            ruta_salida = self.output_path / f\"{repo_name}{sufijo}\"\n            if ruta_salida.exists():\n                ruta_salida.unlink()\n                LOGGER.info(\"Archivo legado eliminado: %s\", ruta_salida)",
+    "crumbs": [
+      "SBOMs",
+      "Script detallado"
+    ]
+  },
+  {
+    "objectID": "sbom/explicacion_script_sbom.html#ejecución-desde-la-línea-de-comandos",
+    "href": "sbom/explicacion_script_sbom.html#ejecución-desde-la-línea-de-comandos",
+    "title": "Script detallado",
+    "section": "4. Ejecución desde la Línea de Comandos",
+    "text": "4. Ejecución desde la Línea de Comandos\nFinalmente, el script define funciones para construir un analizador de argumentos y ejecutar la generación de SBOMs. El bloque if __name__ == \"__main__\" se asegura de que el código de ejecución solo se corra cuando el archivo es el punto de entrada principal.\ndef _construir_parser() -&gt; argparse.ArgumentParser:\n    parser = argparse.ArgumentParser(\n        description=\"Genera SBOMs en JSON para todos los repositorios usando Syft.\"\n    )\n    parser.add_argument(\n        \"--repos-path\",\n        default=str(RUTA_REPOS_POR_DEFECTO),\n        help=\"Ruta al directorio que contiene los repositorios a analizar.\",\n    )\n    parser.add_argument(\n        \"--output-path\",\n        default=str(RUTA_RESULTADOS_POR_DEFECTO),\n        help=\"Ruta al directorio donde se guardaran los SBOMs.\",\n    )\n    parser.add_argument(\n        \"--dry-run\",\n        action=\"store_true\",\n        help=\"Muestra que repositorios se procesarian sin ejecutar Syft.\",\n    )\n    return parser\n\n\ndef main() -&gt; int:\n    parser = _construir_parser()\n    args = parser.parse_args()\n\n    generador = SBOMGenerator(args.repos_path, args.output_path)\n    generador.dry_run = args.dry_run\n    try:\n        generador.run()\n    except Exception as error:\n        LOGGER.error(\"%s\", error)\n        return 1\n\n    return 0\n\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())",
+    "crumbs": [
+      "SBOMs",
+      "Script detallado"
+    ]
+  },
+  {
+    "objectID": "ml5/sound_classifier.html",
+    "href": "ml5/sound_classifier.html",
+    "title": "Clasificador de Sonido",
+    "section": "",
+    "text": "Este modelo utiliza SpeechCommands18w, entrenado para reconocer 18 palabras de comando en inglés. El clasificador escucha continuamente a través de tu micrófono y detecta cuál de las 18 palabras está siendo pronunciada.\nInstrucciones:",
+    "crumbs": [
+      "ML5",
+      "Clasificador de Sonido"
+    ]
+  },
+  {
+    "objectID": "ml5/sound_classifier.html#explicación-del-código",
+    "href": "ml5/sound_classifier.html#explicación-del-código",
+    "title": "Clasificador de Sonido",
+    "section": "Explicación del Código",
+    "text": "Explicación del Código\n\nCódigo Completo\nlet classifier;\n\n// Array containing the 18 words of SpeechCommands18w\nlet words = [\n    \"zero\", \"one\", \"two\", \"three\", \"four\", \"five\", \"six\", \"seven\", \"eight\", \"nine\",\n    \"up\", \"down\", \"left\", \"right\", \"go\", \"stop\", \"yes\", \"no\"\n];\n\n// Variable for displaying the results on the canvas\nlet predictedWord = \"\";\n\nfunction preload() {\n    // Options for the SpeechCommands18w model\n    let options = { probabilityThreshold: 0.7 };\n    // Load SpeechCommands18w sound classifier model\n    classifier = ml5.soundClassifier(\"SpeechCommands18w\", options);\n}\n\nfunction setup() {\n    createCanvas(650, 450);\n    // Classify the sound from microphone in real time\n    classifier.classifyStart(gotResult);\n}\n\nfunction draw() {\n    background(250);\n    // Call function for displaying background words\n    displayWords();\n    \n    // Once the model outputs results start displaying the predicted word\n    if (predictedWord !== \"\") {\n        fill(211, 107, 255);\n        textAlign(CENTER, CENTER);\n        textSize(64);\n        text(predictedWord, width / 2, 90);\n    }\n}\n\n// Function to display the 18 words on the canvas\nfunction displayWords() {\n    textAlign(CENTER, CENTER);\n    textSize(32);\n    fill(96);\n    text(\"Say one of these words!\", width / 2, 40);\n    \n    let x = 125;\n    let y = 150;\n    // Words appear in 3 columns of 6 rows\n    for (let i = 0; i &lt; words.length; i++) {\n        fill(158);\n        text(words[i], x, y);\n        y += 50;\n        if ((i + 1) % 6 === 0) {\n            x += 200;\n            y = 150;\n        }\n    }\n}\n\n// A function to run when we get any errors and the results\nfunction gotResult(results) {\n    // The results are in an array ordered by confidence\n    console.log(results);\n    // Load the first label to the text variable\n    if (results && results.length &gt; 0) {\n        predictedWord = results[0].label;\n    }\n}\n\n\n1. Declaración de Variables\nPrimero, declaramos las variables que necesitaremos:\nlet classifier;\nlet words = [\n    \"zero\", \"one\", \"two\", \"three\", \"four\", \"five\", \"six\", \"seven\", \"eight\", \"nine\",\n    \"up\", \"down\", \"left\", \"right\", \"go\", \"stop\", \"yes\", \"no\"\n];\nlet predictedWord = \"\";\n\nclassifier: Almacenará el modelo SpeechCommands18w de ml5.js\nwords: Array con las 18 palabras que el modelo puede reconocer\npredictedWord: Guardará la última palabra detectada por el modelo\n\n\n\n2. Carga del Modelo (preload)\nLa función preload() carga el clasificador de sonido antes de iniciar:\nfunction preload() {\n    let options = { probabilityThreshold: 0.7 };\n    classifier = ml5.soundClassifier(\"SpeechCommands18w\", options);\n}\n\nprobabilityThreshold: 0.7: Solo acepta predicciones con 70% o más de confianza\nml5.soundClassifier(\"SpeechCommands18w\"): Carga el modelo pre-entrenado con 18 comandos\nEsta función garantiza que el modelo esté listo antes de setup()\n\n\n\n3. Configuración e Inicio de Clasificación (setup)\nLa función setup() configura el canvas e inicia la clasificación continua:\nfunction setup() {\n    createCanvas(650, 450);\n    classifier.classifyStart(gotResult);\n}\n\ncreateCanvas(650, 450): Crea el lienzo para mostrar las palabras\nclassifyStart(gotResult): Inicia la clasificación continua del audio del micrófono\nCada vez que detecta un sonido, llama a gotResult() con los resultados\n\n\n\n4. Visualización (draw)\nLa función draw() se ejecuta continuamente para mostrar la interfaz:\nfunction draw() {\n    background(250);\n    displayWords();\n    \n    if (predictedWord !== \"\") {\n        fill(211, 107, 255);\n        textAlign(CENTER, CENTER);\n        textSize(64);\n        text(predictedWord, width / 2, 90);\n    }\n}\n\nbackground(250): Limpia el canvas con un fondo gris claro\ndisplayWords(): Muestra las 18 palabras disponibles\ntext(predictedWord, ...): Muestra en grande la palabra detectada en color morado\n\n\n\n5. Mostrar Palabras Disponibles (displayWords)\nEsta función dibuja todas las palabras que el usuario puede decir:\nfunction displayWords() {\n    textAlign(CENTER, CENTER);\n    textSize(32);\n    fill(96);\n    text(\"Say one of these words!\", width / 2, 40);\n    \n    let x = 125;\n    let y = 150;\n    for (let i = 0; i &lt; words.length; i++) {\n        fill(158);\n        text(words[i], x, y);\n        y += 50;\n        if ((i + 1) % 6 === 0) {\n            x += 200;\n            y = 150;\n        }\n    }\n}\n\nOrganiza las 18 palabras en 3 columnas de 6 filas\n(i + 1) % 6 === 0: Detecta cuando completar una columna\nMueve x a la derecha y resetea y al iniciar nueva columna\n\n\n\n6. Procesamiento de Resultados (gotResult)\nEsta función recibe las predicciones del clasificador:\nfunction gotResult(results) {\n    console.log(results);\n    if (results && results.length &gt; 0) {\n        predictedWord = results[0].label;\n    }\n}\n\nresults: Array ordenado por nivel de confianza\nresults[0].label: La palabra con mayor probabilidad\nSe actualiza predictedWord que se muestra en draw()\nEsta función se llama automáticamente cada vez que hay una nueva predicción",
+    "crumbs": [
+      "ML5",
+      "Clasificador de Sonido"
+    ]
+  },
+  {
+    "objectID": "ml5/image_classification_tm.html",
+    "href": "ml5/image_classification_tm.html",
+    "title": "Clasificador de Video con Teachable Machine",
+    "section": "",
+    "text": "Este modelo utiliza un clasificador entrenado en Teachable Machine para analizar imágenes capturadas desde una cámara web en tiempo real. El clasificador puede identificar patrones visuales definidos durante el entrenamiento del modelo y producir una predicción continua a partir del video.\nInstrucciones:",
+    "crumbs": [
+      "ML5",
+      "Clasificador de Video con Teachable Machine"
+    ]
+  },
+  {
+    "objectID": "ml5/image_classification_tm.html#explicación-del-código",
+    "href": "ml5/image_classification_tm.html#explicación-del-código",
+    "title": "Clasificador de Video con Teachable Machine",
+    "section": "Explicación del Código",
+    "text": "Explicación del Código\n\nCódigo Completo\n// Clasificador de imágenes cargado desde Teachable Machine\nlet classifier;\n\n// Video capturado en tiempo real desde la cámara web\nlet video;\n\n// Etiqueta resultante de la clasificación\nlet label = \"\";\n\n// URL del modelo entrenado en Teachable Machine\nconst modelURL = \"https://teachablemachine.withgoogle.com/models/bXy2kDNi/\";\n\n// Se ejecuta antes de setup() y se usa para cargar recursos\nfunction preload() {\n    // Cargar el modelo de clasificación entrenado previamente\n    classifier = ml5.imageClassifier(modelURL);\n}\n\nfunction setup() {\n    // Crear el lienzo donde se mostrará el video\n    createCanvas(640, 520);\n\n    // Activar la cámara y capturar el video\n    video = createCapture(VIDEO);\n\n    // Ocultar el elemento HTML del video (solo se usa el canvas)\n    video.hide();\n\n    // Iniciar la primera clasificación del video\n    classifier.classify(video, gotResult);\n}\n\n// Función callback que se ejecuta cuando el modelo entrega un resultado\nfunction gotResult(error, results) {\n    // Verificar si ocurrió un error durante la clasificación\n    if (error) {\n        console.error(error);\n        return;\n    }\n\n    // Guardar la etiqueta más probable\n    label = results[0].label;\n\n    // Volver a clasificar el siguiente frame del video\n    classifier.classify(video, gotResult);\n}\n\nfunction draw() {\n    // Dibujar el video en el lienzo\n    image(video, 0, 0, width, height);\n\n    // Configurar el estilo del texto\n    fill(255);\n    stroke(0);\n    strokeWeight(2);\n    textSize(18);\n\n    // Mostrar la etiqueta detectada en pantalla\n    text(\"Etiqueta: \" + label, 10, height - 20);\n}\n\n\n1. Declaración de Variables\nPrimero, declaramos las variables que necesitaremos durante todo el proceso:\n// Clasificador de imágenes cargado desde Teachable Machine\nlet classifier;\n\n// Video capturado en tiempo real desde la cámara web\nlet video;\n\n// Etiqueta resultante de la clasificación\nlet label = \"\";\n\n// URL del modelo entrenado en Teachable Machine\nconst modelURL = \"https://teachablemachine.withgoogle.com/models/bXy2kDNi/\";\n\n\n2. Carga del Modelo (preload)\nLa función preload() se ejecuta antes de setup() y es ideal para cargar recursos:\nfunction preload() {\n    classifier = ml5.imageClassifier(modelURL);\n}\n\n\n3. Configuración Inicial (setup)\nLa función setup() se ejecuta una vez al inicio:\nfunction setup() {\n    createCanvas(640, 520);\n    video = createCapture(VIDEO);\n    video.hide();\n    classifier.classify(video, gotResult);\n}\n\n\n4. Procesamiento de Resultados\nLa función gotResult es un callback que recibe los resultados de la clasificación:\nfunction gotResult(error, results) {\n    if (error) {\n        console.error(error);\n        return;\n    }\n    label = results[0].label;\n    classifier.classify(video, gotResult);\n}\n\n\n5. Visualización del Resultado (draw)\nLa función draw() se ejecuta varias veces por segundo:\nfunction draw() {\n    image(video, 0, 0, width, height);\n    fill(255);\n    stroke(0);\n    strokeWeight(2);\n    textSize(18);\n    text(\"Etiqueta: \" + label, 10, height - 20);\n}",
+    "crumbs": [
+      "ML5",
+      "Clasificador de Video con Teachable Machine"
+    ]
+  },
+  {
+    "objectID": "ml5/dino_run.html",
+    "href": "ml5/dino_run.html",
+    "title": "Dino Run - Control por Gestos",
+    "section": "",
+    "text": "Este es un juego de dinosaurio corredor donde debes saltar sobre los obstáculos. En lugar de usar el teclado, el juego se controla mediante gestos capturados por tu cámara web usando un modelo de Teachable Machine.\nInstrucciones:",
+    "crumbs": [
+      "ML5",
+      "Dino Run - Control por Gestos"
+    ]
+  },
+  {
+    "objectID": "ml5/dino_run.html#código-completo",
+    "href": "ml5/dino_run.html#código-completo",
+    "title": "Dino Run - Control por Gestos",
+    "section": "Código Completo",
+    "text": "Código Completo\n// Game objects\nlet dino;\nlet obstacles = [];\nlet groundY = 300;\n\n// ML5 variables\nlet classifier;\nlet video;\nlet movementLabel = '';\n\n// Game variables\nlet count = 0;\nlet gameOver = false;\nlet gameStarted = false;\nlet countdown = 3;\nlet countdownTimer = 0;\nlet lastObstacleFrame = 0;\nlet minObstacleDistance = 80;\n\n// Images\nlet imgDino;\nlet imgTree;\nlet imgExplosion;\n\nfunction preload() {\n    imgDino = loadImage(\"../data/images/dino_run/dino.png\");\n    imgTree = loadImage(\"../data/images/dino_run/tree.png\");\n    imgExplosion = loadImage(\"../data/images/dino_run/explosion.png\");\n    classifier = ml5.imageClassifier('https://teachablemachine.withgoogle.com/models/Ij_wIPp5Q/model.json');\n}\n\nfunction setup() {\n    createCanvas(800, 400);\n    \n    video = createCapture(VIDEO);\n    video.size(160, 120);\n    video.hide();\n    \n    dino = new Dino(groundY);\n    obstacles.push(new Obstacle(groundY));\n    \n    countdownTimer = millis();\n    classifyVideo();\n}\n\nfunction classifyVideo() {\n    if (!gameOver) {\n        classifier.classify(video, gotResults);\n    }\n}\n\nfunction gotResults(error, results) {\n    if (error) {\n        console.error(error);\n        return;\n    }\n    \n    if (results && results.length &gt; 0) {\n        movementLabel = results[0].label;\n    }\n    \n    setModelGesture();\n    classifyVideo();\n}\n\nfunction setModelGesture() {\n    if (movementLabel === 'Jump') {\n        dino.jump();\n    }\n}\n\nfunction draw() {\n    background(220);\n    \n    // Countdown logic\n    if (!gameStarted && !gameOver) {\n        let elapsed = millis() - countdownTimer;\n        countdown = 3 - floor(elapsed / 1000);\n        \n        if (countdown &lt;= 0) {\n            gameStarted = true;\n        }\n    }\n    \n    // Update and draw the dinosaur\n    dino.update();\n    dino.show();\n    \n    // Display score\n    textSize(32);\n    textAlign(LEFT, TOP);\n    fill(0);\n    text(`Points: ${count}`, 10, 10);\n    \n    // Display hit points (hearts)\n    textSize(20);\n    let hearts = '';\n    for (let i = 0; i &lt; dino.getHitPoints(); i++) {\n        hearts += '❤️ ';\n    }\n    text(`HP: ${hearts}`, 10, 50);\n    \n    // Display gesture\n    textSize(20);\n    text(`Gesture: ${movementLabel}`, 10, 80);\n    \n    // Show countdown\n    if (!gameStarted && !gameOver && countdown &gt; 0) {\n        fill(255, 165, 0);\n        textSize(72);\n        textAlign(CENTER, CENTER);\n        text(countdown, width/2, height/2);\n    }\n    \n    // Spawn obstacles with proper spacing\n    if (gameStarted && !gameOver) {\n        let framesSinceLastObstacle = frameCount - lastObstacleFrame;\n        let randomInterval = random(minObstacleDistance, minObstacleDistance + 40);\n        \n        if (framesSinceLastObstacle &gt;= randomInterval) {\n            obstacles.push(new Obstacle(groundY));\n            lastObstacleFrame = frameCount;\n        }\n    }\n    \n    // Update and draw each obstacle\n    for (let i = obstacles.length - 1; i &gt;= 0; i--) {\n        if (gameStarted) {\n            obstacles[i].update();\n        }\n        obstacles[i].show();\n        \n        // Check collision\n        if (gameStarted && obstacles[i].hits(dino) && !gameOver) {\n            let isGameOver = dino.hit();\n            if (isGameOver) {\n                gameOver = true;\n            }\n            obstacles.splice(i, 1);\n            continue;\n        }\n        \n        // Remove offscreen obstacles\n        if (obstacles[i].offscreen()) {\n            if (gameStarted) {\n                count++;\n            }\n            obstacles.splice(i, 1);\n        }\n    }\n    \n    // Draw the ground line\n    stroke(0);\n    line(0, groundY, width, groundY);\n    \n    // Draw webcam feed in top right corner\n    push();\n    translate(width - 165, 5);\n    stroke(0);\n    strokeWeight(3);\n    fill(255);\n    rect(0, 0, 160, 120);\n    image(video, 0, 0, 160, 120);\n    pop();\n    \n    // Show game over message\n    if (gameOver) {\n        fill(0);\n        textSize(48);\n        textAlign(CENTER, CENTER);\n        text(\"GAME OVER\", width/2, height/2 - 30);\n        textSize(24);\n        text(`Total Points: ${count}`, width/2, height/2 + 20);\n        text(`Total Jumps: ${dino.getTotalJumps()}`, width/2, height/2 + 50);\n    }\n}\n\n// Dino class\nclass Dino {\n    constructor(groundY) {\n        this.r = 50;\n        this.x = 50;\n        this.groundY = groundY;\n        this.y = groundY - this.r;\n        this.vy = 0;\n        this.gravity = 1.5;\n        this.totalJumps = 0;\n        this.isDead = false;\n        this.hitPoints = 3;\n        this.invulnerable = false;\n        this.invulnerableTimer = 0;\n    }\n    \n    jump() {\n        if (this.y === this.groundY - this.r) {\n            this.totalJumps++;\n            this.vy = -28;\n        }\n    }\n    \n    update() {\n        this.y += this.vy;\n        this.vy += this.gravity;\n        \n        if (this.y &gt; this.groundY - this.r) {\n            this.y = this.groundY - this.r;\n            this.vy = 0;\n        }\n        \n        if (this.invulnerable && millis() - this.invulnerableTimer &gt; 2000) {\n            this.invulnerable = false;\n        }\n    }\n    \n    hit() {\n        if (!this.invulnerable && !this.isDead) {\n            this.hitPoints--;\n            if (this.hitPoints &lt;= 0) {\n                this.dead();\n                return true;\n            } else {\n                this.invulnerable = true;\n                this.invulnerableTimer = millis();\n                return false;\n            }\n        }\n        return false;\n    }\n    \n    dead() {\n        this.isDead = true;\n    }\n    \n    show() {\n        if (this.invulnerable && frameCount % 10 &lt; 5) {\n            push();\n            tint(255, 100, 100);\n            if (this.isDead) {\n                image(imgExplosion, this.x, this.y, this.r, this.r);\n            } else {\n                image(imgDino, this.x, this.y, this.r, this.r);\n            }\n            pop();\n        } else {\n            if (this.isDead) {\n                image(imgExplosion, this.x, this.y, this.r, this.r);\n            } else {\n                image(imgDino, this.x, this.y, this.r, this.r);\n            }\n        }\n    }\n    \n    getTotalJumps() {\n        return this.totalJumps;\n    }\n    \n    getHitPoints() {\n        return this.hitPoints;\n    }\n}\n\n// Obstacle class\nclass Obstacle {\n    constructor(groundY) {\n        this.w = 20;\n        this.h = random(40, 80);\n        this.x = width;\n        this.groundY = groundY;\n        this.y = groundY - this.h;\n        this.speed = 3;\n    }\n    \n    update() {\n        this.x -= this.speed;\n    }\n    \n    offscreen() {\n        return this.x &lt; -this.w;\n    }\n    \n    show() {\n        image(imgTree, this.x, this.y, this.w, this.h);\n    }\n    \n    hits(dino) {\n        return (\n            dino.x &lt; this.x + this.w &&\n            dino.x + dino.r &gt; this.x &&\n            dino.y &lt; this.y + this.h &&\n            dino.y + dino.r &gt; this.y\n        );\n    }\n}",
+    "crumbs": [
+      "ML5",
+      "Dino Run - Control por Gestos"
+    ]
+  },
+  {
+    "objectID": "ml5/image_classification.html",
+    "href": "ml5/image_classification.html",
+    "title": "Clasificador de Imágenes",
+    "section": "",
+    "text": "Este modelo utiliza MobileNet, una red neuronal convolucional entrenada para clasificar imágenes en más de 1000 categorías diferentes. El clasificador puede identificar objetos comunes, animales, vehículos, alimentos y mucho más.\nInstrucciones:",
+    "crumbs": [
+      "ML5",
+      "Clasificador de Imágenes"
+    ]
+  },
+  {
+    "objectID": "ml5/image_classification.html#explicación-del-código",
+    "href": "ml5/image_classification.html#explicación-del-código",
+    "title": "Clasificador de Imágenes",
+    "section": "Explicación del Código",
+    "text": "Explicación del Código\n\nCódigo Completo\n// Initialize the Image Classifier method with MobileNet\nlet classifier;\n\n// A variable to hold the image we want to classify\nlet img;\n\n// Variables for displaying the results on the canvas\nlet label = \"\";\nlet confidence = \"\";\n\n// Array of available images\nconst images = [\n    \"../data/images/image_classification/cheetah.png\",\n    \"../data/images/image_classification/flamingo.png\",\n    \"../data/images/image_classification/lion.png\",\n    \"../data/images/image_classification/panda.png\"\n];\n\nfunction preload() {\n    classifier = ml5.imageClassifier(\"MobileNet\");\n    // Randomly select one image\n    const randomImage = images[Math.floor(Math.random() * images.length)];\n    img = loadImage(randomImage);\n}\n\nfunction setup() {\n    createCanvas(400, 400);\n    \n    // Display the image\n    image(img, 0, 0, width, height);\n    \n    // Classify the image\n    classifier.classify(img, gotResult);\n}\n\n// Callback function for when classification has finished\nfunction gotResult(error, results) {\n    if (error) {\n        console.error(error);\n        return;\n    }\n    \n    // The results are in an array ordered by confidence\n    console.log(results);\n\n    // Display the results on the canvas\n    fill(255);\n    stroke(0);\n    strokeWeight(2);\n    textSize(18);\n    label = \"Etiqueta: \" + results[0].label;\n    confidence = \"Confianza: \" + nf(results[0].confidence, 0, 2);\n    text(label, 10, 360);\n    text(confidence, 10, 380);\n}\n\n\n1. Declaración de Variables\nPrimero, declaramos las variables que necesitaremos durante todo el proceso:\nlet classifier;\nlet img;\nlet label = \"\";\nlet confidence = \"\";\n\nclassifier: Almacenará el modelo MobileNet de ml5.js\nimg: Guardará la imagen que queremos clasificar\nlabel y confidence: Contendrán los resultados de la clasificación\n\n\n\n2. Array de Imágenes Disponibles\nDefinimos un array con las rutas de las imágenes que queremos clasificar:\nconst images = [\n    \"../data/images/image_classification/cheetah.png\",\n    \"../data/images/image_classification/flamingo.png\",\n    \"../data/images/image_classification/lion.png\",\n    \"../data/images/image_classification/panda.png\"\n];\n\n\n3. Carga del Modelo y la Imagen (preload)\nLa función preload() se ejecuta antes de setup() y es ideal para cargar recursos:\nfunction preload() {\n    classifier = ml5.imageClassifier(\"MobileNet\");\n    const randomImage = images[Math.floor(Math.random() * images.length)];\n    img = loadImage(randomImage);\n}\n\nml5.imageClassifier(\"MobileNet\"): Carga el modelo pre-entrenado MobileNet\nMath.floor(Math.random() * images.length): Selecciona un índice aleatorio del array\nloadImage(): Carga la imagen seleccionada\n\n\n\n4. Configuración Inicial (setup)\nLa función setup() se ejecuta una vez al inicio:\nfunction setup() {\n    createCanvas(400, 400);\n    image(img, 0, 0, width, height);\n    classifier.classify(img, gotResult);\n}\n\ncreateCanvas(400, 400): Crea un lienzo de 400x400 píxeles\nimage(img, 0, 0, width, height): Dibuja la imagen en el canvas\nclassifier.classify(img, gotResult): Inicia la clasificación y llama a gotResult cuando termine\n\n\n\n5. Procesamiento de Resultados\nLa función gotResult es un callback que recibe los resultados de la clasificación:\nfunction gotResult(error, results) {\n    if (error) {\n        console.error(error);\n        return;\n    }\n    \n    console.log(results);\n    \n    fill(255);\n    stroke(0);\n    strokeWeight(2);\n    textSize(18);\n    label = \"Etiqueta: \" + results[0].label;\n    confidence = \"Confianza: \" + nf(results[0].confidence, 0, 2);\n    text(label, 10, 360);\n    text(confidence, 10, 380);\n}\n\nerror: Contiene información si algo salió mal\nresults: Array ordenado por confianza, donde results[0] es la predicción más probable\nresults[0].label: La etiqueta de la clasificación (ej: “panda”)\nresults[0].confidence: Nivel de confianza entre 0 y 1\nnf(): Formatea el número con 2 decimales",
+    "crumbs": [
+      "ML5",
+      "Clasificador de Imágenes"
+    ]
+  },
+  {
+    "objectID": "ml5/hand_pose.html",
+    "href": "ml5/hand_pose.html",
+    "title": "Detección de Pose de Manos",
+    "section": "",
+    "text": "Este modelo utiliza HandPose de ml5.js para identificar y rastrear 21 puntos clave en cada mano detectada. El modelo puede rastrear múltiples manos simultáneamente y proporciona las coordenadas exactas de cada articulación.\nInstrucciones:",
+    "crumbs": [
+      "ML5",
+      "Detección de Pose de Manos"
+    ]
+  },
+  {
+    "objectID": "ml5/hand_pose.html#explicación-del-código",
+    "href": "ml5/hand_pose.html#explicación-del-código",
+    "title": "Detección de Pose de Manos",
+    "section": "Explicación del Código",
+    "text": "Explicación del Código\n\nCódigo Completo\nlet handpose;\nlet video;\nlet predictions = [];\n\nfunction setup() {\n    createCanvas(640, 480);\n    \n    // Create the webcam video and hide it\n    video = createCapture(VIDEO);\n    video.size(640, 480);\n    video.hide();\n    \n    // Load the handpose model\n    handpose = ml5.handpose(video, modelReady);\n}\n\nfunction modelReady() {\n    console.log(\"Handpose Model Ready!\");\n    // Start detecting hands\n    handpose.on('predict', gotHands);\n}\n\n// Callback function for when handpose outputs data\nfunction gotHands(results) {\n    // Save the output to the predictions variable\n    predictions = results;\n}\n\nfunction draw() {\n    // Draw the webcam video\n    image(video, 0, 0, width, height);\n    \n    // Draw all the tracked hand points\n    for (let i = 0; i &lt; predictions.length; i++) {\n        let prediction = predictions[i];\n        for (let j = 0; j &lt; prediction.landmarks.length; j++) {\n            let keypoint = prediction.landmarks[j];\n            fill(0, 255, 0);\n            noStroke();\n            circle(keypoint[0], keypoint[1], 10);\n        }\n    }\n}\n\n\n1. Declaración de Variables\nPrimero, declaramos las variables que necesitaremos:\nlet handpose;\nlet video;\nlet predictions = [];\n\nhandpose: Almacenará el modelo HandPose de ml5.js\nvideo: Contendrá la captura de la cámara web\npredictions: Array que guardará todas las manos detectadas y sus puntos clave\n\n\n\n2. Configuración Inicial (setup)\nLa función setup() configura el canvas, la cámara y carga el modelo:\nfunction setup() {\n    createCanvas(640, 480);\n    video = createCapture(VIDEO);\n    video.size(640, 480);\n    video.hide();\n    handpose = ml5.handpose(video, modelReady);\n}\n\ncreateCanvas(640, 480): Crea un lienzo de 640x480 píxeles\ncreateCapture(VIDEO): Captura el video de la webcam\nvideo.hide(): Oculta el elemento HTML del video (solo mostramos el canvas)\nml5.handpose(video, modelReady): Carga el modelo HandPose con el video como entrada\n\n\n\n3. Inicio de Detección (modelReady)\nEsta función se ejecuta cuando el modelo está listo:\nfunction modelReady() {\n    console.log(\"Handpose Model Ready!\");\n    handpose.on('predict', gotHands);\n}\n\nhandpose.on('predict', gotHands): Registra un listener para las predicciones\nCada vez que el modelo detecta manos, llama automáticamente a gotHands()\nEste patrón permite detección continua en tiempo real\n\n\n\n4. Procesamiento de Resultados (gotHands)\nEsta función recibe las predicciones del modelo:\nfunction gotHands(results) {\n    predictions = results;\n}\n\nresults: Array con todas las manos detectadas en el frame actual\nCada mano contiene 21 puntos clave (landmarks) con coordenadas x, y, z\npredictions se actualiza continuamente con las nuevas detecciones\n\n\n\n5. Visualización (draw)\nLa función draw() se ejecuta continuamente y dibuja el video con los puntos de la mano:\nfunction draw() {\n    image(video, 0, 0, width, height);\n    \n    for (let i = 0; i &lt; predictions.length; i++) {\n        let prediction = predictions[i];\n        for (let j = 0; j &lt; prediction.landmarks.length; j++) {\n            let keypoint = prediction.landmarks[j];\n            fill(0, 255, 0);\n            noStroke();\n            circle(keypoint[0], keypoint[1], 10);\n        }\n    }\n}\n\nimage(video, 0, 0, width, height): Dibuja el frame actual del video\nPrimer bucle for: Itera sobre cada mano detectada\nSegundo bucle for: Itera sobre los 21 puntos clave de cada mano\nkeypoint[0], keypoint[1]: Coordenadas x, y de cada punto\ncircle(): Dibuja un círculo verde de 10 píxeles en cada punto clave\nLos 21 puntos incluyen: muñeca, nudillos, articulaciones y puntas de los dedos",
+    "crumbs": [
+      "ML5",
+      "Detección de Pose de Manos"
+    ]
+  },
+  {
+    "objectID": "ml5/object_detection.html",
+    "href": "ml5/object_detection.html",
+    "title": "Detección de objetos",
+    "section": "",
+    "text": "Este modelo utiliza COCO-SSD (Common Objects in Context - Single Shot Detection) para identificar y localizar objetos en tiempo real. El modelo puede detectar 80 clases diferentes de objetos comunes como personas, animales, vehículos, muebles y más.\nInstrucciones:",
+    "crumbs": [
+      "ML5",
+      "Detección de objetos"
+    ]
+  },
+  {
+    "objectID": "ml5/object_detection.html#explicación-del-código",
+    "href": "ml5/object_detection.html#explicación-del-código",
+    "title": "Detección de objetos",
+    "section": "Explicación del Código",
+    "text": "Explicación del Código\n\nCódigo Completo\nlet video;\nlet detector;\nlet detections = [];\n\nfunction setup() {\n    createCanvas(640, 480);\n    \n    // Using webcam feed as video input\n    video = createCapture(VIDEO, videoReady);\n    video.size(width, height);\n    video.hide();\n}\n\nfunction videoReady() {\n    console.log(\"Video Ready!\");\n    // Create detector AFTER video is ready\n    detector = ml5.objectDetector('cocossd', modelReady);\n}\n\nfunction modelReady() {\n    console.log(\"Model Ready!\");\n    detect();\n}\n\nfunction detect() {\n    detector.detect(video, gotDetections);\n}\n\nfunction gotDetections(error, results) {\n    if (error) {\n        console.error(error);\n        return;\n    }\n    // Update detections array with the new results\n    detections = results;\n    // Call detect again for continuous detection\n    detect();\n}\n\nfunction draw() {\n    // Draw the current video frame onto the canvas\n    image(video, 0, 0);\n    \n    for (let i = 0; i &lt; detections.length; i++) {\n        let detection = detections[i];\n        \n        // Draw bounding box\n        stroke(0, 255, 0);\n        strokeWeight(4);\n        noFill();\n        rect(detection.x, detection.y, detection.width, detection.height);\n        \n        // Draw label\n        noStroke();\n        fill(255);\n        textSize(24);\n        text(detection.label, detection.x + 10, detection.y + 24);\n    }\n}\n\n\n1. Declaración de Variables\nPrimero, declaramos las variables que necesitaremos durante todo el proceso:\nlet video;\nlet detector;\nlet detections = [];\n\nvideo: Almacenará la captura de la cámara web\ndetector: Contendrá el modelo COCO-SSD de ml5.js\ndetections: Array que guardará los objetos detectados en cada frame\n\n\n\n2. Configuración Inicial (setup)\nLa función setup() se ejecuta una vez al inicio y configura el canvas y la cámara:\nfunction setup() {\n    createCanvas(640, 480);\n    video = createCapture(VIDEO, videoReady);\n    video.size(width, height);\n    video.hide();\n}\n\ncreateCanvas(640, 480): Crea un lienzo de 640x480 píxeles para mostrar el video\ncreateCapture(VIDEO, videoReady): Captura el video de la webcam y llama a videoReady cuando esté listo\nvideo.hide(): Oculta el elemento HTML del video (solo mostramos el canvas)\n\n\n\n3. Carga del Modelo (videoReady)\nEsta función se ejecuta cuando el video está listo, garantizando que el detector tenga video para analizar:\nfunction videoReady() {\n    detector = ml5.objectDetector('cocossd', modelReady);\n}\n\nml5.objectDetector('cocossd', modelReady): Carga el modelo COCO-SSD pre-entrenado\nSe llama solo después de que el video esté disponible para evitar errores\nCuando el modelo carga, llama automáticamente a modelReady()\n\n\n\n4. Inicio de Detección (modelReady y detect)\nEstas funciones inician el ciclo de detección continua:\nfunction modelReady() {\n    detect();\n}\n\nfunction detect() {\n    detector.detect(video, gotDetections);\n}\n\ndetect(): Función que inicia una detección en el frame actual del video\ndetector.detect(video, gotDetections): Analiza el video y llama a gotDetections con los resultados\n\n\n\n5. Procesamiento de Resultados (gotDetections)\nEsta función recibe los objetos detectados y mantiene la detección continua:\nfunction gotDetections(error, results) {\n    if (error) {\n        console.error(error);\n        return;\n    }\n    detections = results;\n    detect();\n}\n\nerror: Contiene información si algo salió mal\nresults: Array con todos los objetos detectados en el frame\ndetections = results: Actualiza el array de detecciones\ndetect(): Llama recursivamente para detección continua\n\n\n\n6. Visualización (draw)\nLa función draw() se ejecuta continuamente y dibuja el video con las detecciones:\nfunction draw() {\n    image(video, 0, 0);\n    \n    for (let i = 0; i &lt; detections.length; i++) {\n        let detection = detections[i];\n        \n        // Draw bounding box\n        stroke(0, 255, 0);\n        strokeWeight(4);\n        noFill();\n        rect(detection.x, detection.y, detection.width, detection.height);\n        \n        // Draw label\n        noStroke();\n        fill(255);\n        textSize(24);\n        text(detection.label, detection.x + 10, detection.y + 24);\n    }\n}\n\nimage(video, 0, 0): Dibuja el frame actual del video en el canvas\nrect(): Dibuja un rectángulo verde alrededor de cada objeto detectado\ntext(): Muestra la etiqueta del objeto (ej: “person”, “car”, “dog”)\ndetection.x, detection.y, detection.width, detection.height: Coordenadas del objeto",
+    "crumbs": [
+      "ML5",
+      "Detección de objetos"
+    ]
+  },
+  {
+    "objectID": "sbom/introduccion_sboms.html",
+    "href": "sbom/introduccion_sboms.html",
+    "title": "Introducción SBOMs",
+    "section": "",
+    "text": "Un Software Bill of Materials (SBOM) es un inventario estructurado de los componentes que forman parte de una aplicación o artefacto de software. En términos simples, cumple un rol similar al de una lista de ingredientes: identifica bibliotecas, paquetes, dependencias, herramientas y otros elementos utilizados durante el desarrollo, la compilación y la distribución de un sistema. Su valor no está solo en enumerar componentes, sino también en aportar contexto sobre su origen, sus versiones y la relación que mantienen entre sí.\nEn el desarrollo moderno, donde es habitual reutilizar paquetes de código abierto, imágenes de contenedores y dependencias de terceros, contar con esa visibilidad se ha vuelto especialmente importante. Un SBOM permite comprender mejor qué software se está utilizando realmente, qué tan amplio es el árbol de dependencias y cuáles son los puntos que podrían requerir revisión desde una perspectiva de seguridad, cumplimiento o mantenimiento.",
+    "crumbs": [
+      "SBOMs",
+      "Introducción SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/introduccion_sboms.html#qué-es-un-sbom",
+    "href": "sbom/introduccion_sboms.html#qué-es-un-sbom",
+    "title": "Introducción SBOMs",
+    "section": "",
+    "text": "Un Software Bill of Materials (SBOM) es un inventario estructurado de los componentes que forman parte de una aplicación o artefacto de software. En términos simples, cumple un rol similar al de una lista de ingredientes: identifica bibliotecas, paquetes, dependencias, herramientas y otros elementos utilizados durante el desarrollo, la compilación y la distribución de un sistema. Su valor no está solo en enumerar componentes, sino también en aportar contexto sobre su origen, sus versiones y la relación que mantienen entre sí.\nEn el desarrollo moderno, donde es habitual reutilizar paquetes de código abierto, imágenes de contenedores y dependencias de terceros, contar con esa visibilidad se ha vuelto especialmente importante. Un SBOM permite comprender mejor qué software se está utilizando realmente, qué tan amplio es el árbol de dependencias y cuáles son los puntos que podrían requerir revisión desde una perspectiva de seguridad, cumplimiento o mantenimiento.",
+    "crumbs": [
+      "SBOMs",
+      "Introducción SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/introduccion_sboms.html#por-qué-los-sboms-han-tomado-tanta-relevancia",
+    "href": "sbom/introduccion_sboms.html#por-qué-los-sboms-han-tomado-tanta-relevancia",
+    "title": "Introducción SBOMs",
+    "section": "¿Por qué los SBOMs han tomado tanta relevancia?",
+    "text": "¿Por qué los SBOMs han tomado tanta relevancia?\nLa seguridad de la cadena de suministro de software se ha convertido en una preocupación central para organizaciones públicas y privadas. Incidentes ampliamente conocidos, como ataques a proveedores de software o vulnerabilidades críticas en componentes reutilizados de manera masiva, han demostrado que no basta con revisar solo el código propio. También es necesario saber con precisión qué componentes externos forman parte de una solución y cómo impactan en su nivel de riesgo.\nEn ese contexto, los SBOMs aportan una base concreta para mejorar la trazabilidad y la transparencia. Permiten identificar dependencias potencialmente vulnerables, revisar si existen licencias incompatibles con políticas internas y fortalecer la capacidad de respuesta ante nuevos hallazgos de seguridad. Además, su adopción ha ido creciendo no solo por razones técnicas, sino también por exigencias regulatorias y por una demanda cada vez mayor de evidencia sobre el origen y la composición del software.",
+    "crumbs": [
+      "SBOMs",
+      "Introducción SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/introduccion_sboms.html#estándares-y-automatización",
+    "href": "sbom/introduccion_sboms.html#estándares-y-automatización",
+    "title": "Introducción SBOMs",
+    "section": "Estándares y automatización",
+    "text": "Estándares y automatización\nPara que un SBOM sea realmente útil, su generación e interpretación deben poder automatizarse. Por eso existen estándares de intercambio que facilitan producir, compartir y procesar esta información de manera consistente. Entre los formatos más conocidos se encuentran CycloneDX, actualmente desarrollado como estándar abierto para transparencia de la cadena de suministro, y SPDX, estándar internacional abierto utilizado ampliamente para describir componentes, licencias y relaciones entre artefactos de software. Ambos son ampliamente utilizados en prácticas de seguridad y cumplimiento.\nLa automatización es clave porque un SBOM pierde valor si se genera una sola vez y luego queda desactualizado. En entornos de desarrollo continuos, donde cambian dependencias, versiones y artefactos con frecuencia, lo recomendable es integrar la generación de SBOMs al flujo de trabajo habitual. De esa forma, el inventario puede mantenerse vigente y complementarse con procesos de análisis de vulnerabilidades y revisión de licencias.\nComo referencia institucional más general sobre el tema, también resulta útil revisar los materiales de CISA sobre SBOM y los recursos de NTIA sobre Software Bill of Materials, ya que ambos reúnen lineamientos, definiciones y documentos introductorios ampliamente utilizados en la conversación pública sobre transparencia de componentes de software.",
+    "crumbs": [
+      "SBOMs",
+      "Introducción SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/introduccion_sboms.html#contenido-del-módulo",
+    "href": "sbom/introduccion_sboms.html#contenido-del-módulo",
+    "title": "Introducción SBOMs",
+    "section": "Contenido del Módulo",
+    "text": "Contenido del Módulo\nEn este módulo, los materiales siguientes aterrizan esta idea general en un contexto práctico. Por una parte, se muestra cómo generar SBOMs para un conjunto de repositorios y cómo aprovechar esos resultados para obtener una visión consolidada de los componentes detectados. Por otra, se presenta la lógica general del script que automatiza ese proceso, de modo que resulte claro cómo llevar esta práctica desde una explicación conceptual a una ejecución reproducible.\nAsí, esta introducción busca responder el por qué de los SBOMs, mientras que los notebooks posteriores desarrollan el cómo incorporarlos a un flujo de trabajo real. La combinación de ambas perspectivas es relevante: no se trata solo de producir archivos con dependencias, sino de entender por qué esos datos son útiles para la gestión de riesgos, la observabilidad del software y la seguridad de la cadena de suministro.",
+    "crumbs": [
+      "SBOMs",
+      "Introducción SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/introduccion_sboms.html#lista-de-referencias",
+    "href": "sbom/introduccion_sboms.html#lista-de-referencias",
+    "title": "Introducción SBOMs",
+    "section": "Lista de Referencias",
+    "text": "Lista de Referencias\n\nCycloneDX Specification Overview\nSPDX Specifications\nCISA: Software Bill of Materials (SBOM)\nNTIA: Software Bill of Materials",
+    "crumbs": [
+      "SBOMs",
+      "Introducción SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/generacion_sbom.html",
+    "href": "sbom/generacion_sbom.html",
+    "title": "Generación de SBOMs",
+    "section": "",
+    "text": "Este notebook explica el proceso para generar Software Bill of Materials (SBOMs) para un conjunto de repositorios de código y cómo analizar los resultados de manera centralizada. Utilizaremos la herramienta Syft para la generación y la librería Pandas en Python para el análisis.\nEl flujo de trabajo completo está diseñado para ser reproducible y se basa en las siguientes etapas:\n\nDescubrimiento de Repositorios: Identificar los proyectos a los que se les generará un SBOM.\nGeneración de SBOMs: Ejecutar Syft para analizar cada repositorio y crear un SBOM en formato JSON.\nAnálisis de Resultados: Cargar todos los SBOMs generados en un DataFrame de Pandas para su inspección y análisis.",
+    "crumbs": [
+      "SBOMs",
+      "Generación de SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/generacion_sbom.html#objetivo",
+    "href": "sbom/generacion_sbom.html#objetivo",
+    "title": "Generación de SBOMs",
+    "section": "",
+    "text": "Este notebook explica el proceso para generar Software Bill of Materials (SBOMs) para un conjunto de repositorios de código y cómo analizar los resultados de manera centralizada. Utilizaremos la herramienta Syft para la generación y la librería Pandas en Python para el análisis.\nEl flujo de trabajo completo está diseñado para ser reproducible y se basa en las siguientes etapas:\n\nDescubrimiento de Repositorios: Identificar los proyectos a los que se les generará un SBOM.\nGeneración de SBOMs: Ejecutar Syft para analizar cada repositorio y crear un SBOM en formato JSON.\nAnálisis de Resultados: Cargar todos los SBOMs generados en un DataFrame de Pandas para su inspección y análisis.",
+    "crumbs": [
+      "SBOMs",
+      "Generación de SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/generacion_sbom.html#estructura-de-directorios",
+    "href": "sbom/generacion_sbom.html#estructura-de-directorios",
+    "title": "Generación de SBOMs",
+    "section": "Estructura de Directorios",
+    "text": "Estructura de Directorios\nEl proyecto sigue una estructura organizada para separar los datos de entrada, los scripts y los resultados:\nid_2026/\n├── data/\n│   ├── repos/      # Directorio para los repositorios a analizar\n│   └── results/    # Directorio para los SBOMs generados en JSON\n├── nbs/            # Notebooks de Jupyter\n└── scripts/        # Scripts de automatización\n    └── generate_sboms.py",
+    "crumbs": [
+      "SBOMs",
+      "Generación de SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/generacion_sbom.html#paso-1-generación-de-sboms",
+    "href": "sbom/generacion_sbom.html#paso-1-generación-de-sboms",
+    "title": "Generación de SBOMs",
+    "section": "Paso 1: Generación de SBOMs",
+    "text": "Paso 1: Generación de SBOMs\nEl primer paso es ejecutar el script generate_sboms.py, que se encarga de orquestar la generación de los SBOMs.\nEste script realiza las siguientes acciones:\n\nBusca repositorios: Escanea el directorio data/repos en busca de subdirectorios que contengan código fuente.\nEjecuta Syft: Para cada repositorio encontrado, invoca a syft para analizar su contenido.\nGuarda los resultados: El SBOM generado para cada repositorio se guarda como un archivo JSON en el directorio data/results.\n\n\n!python ../../scripts/generate_sboms.py\n\nINFO | Usando Syft CLI: /usr/local/bin/syft\nINFO | [1/3] Procesando repositorio data/repos/claude-code-action\nINFO | SBOM guardado en data/results/claude-code-action-sbom.json\nINFO | [2/3] Procesando repositorio data/repos/genai-code-review\nINFO | SBOM guardado en data/results/genai-code-review-sbom.json\nINFO | [3/3] Procesando repositorio data/repos/opencode\nINFO | SBOM guardado en data/results/opencode-sbom.json\nINFO | Resumen final | total_repos=3 | repos_generados=3 | archivos_generados=3 | omitidos=0 | errores=0",
+    "crumbs": [
+      "SBOMs",
+      "Generación de SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/generacion_sbom.html#paso-2-análisis-de-los-sboms-con-pandas",
+    "href": "sbom/generacion_sbom.html#paso-2-análisis-de-los-sboms-con-pandas",
+    "title": "Generación de SBOMs",
+    "section": "Paso 2: Análisis de los SBOMs con Pandas",
+    "text": "Paso 2: Análisis de los SBOMs con Pandas\nUna vez que los SBOMs han sido generados, podemos cargarlos en un DataFrame de Pandas para analizarlos. Esto nos permite tener una visión consolidada de todas las dependencias y artefactos encontrados en los diferentes repositorios.\nEl siguiente código se encarga de:\n\nLocalizar los archivos JSON: Busca todos los archivos .json en el directorio data/results.\nCargar y normalizar los datos: Para cada archivo JSON, lo carga y utiliza pd.json_normalize para aplanar la estructura anidada de los artefactos.\nAñadir información del repositorio: Agrega una columna repo para identificar a qué repositorio pertenece cada artefacto.\nConcatenar los resultados: Une todos los DataFrames individuales en uno solo.\n\n\nimport pandas as pd\nfrom pathlib import Path\nimport json\n\npath = Path(\"../../data/results\")\n\ndf_all = pd.concat(\n    [\n        pd.json_normalize(json.load(open(file))[\"artifacts\"]).assign(repo=file.stem)\n        for file in path.glob(\"*-sbom.json\")\n    ],\n    ignore_index=True\n)\n\ndf_all.head()\n\n\n\n\n\n\n\n\nid\nname\nversion\ntype\nfoundBy\nlocations\nlicenses\nlanguage\ncpes\npurl\n...\nmetadata.dependencies.@actions/core\nmetadata.dependencies.shell-quote\nmetadata.comment\nmetadata.dependencies.@fastify/busboy\nrepo\nmetadata.name\nmetadata.versionConstraint\nmetadata.version\nmetadata.source\nmetadata.checksum\n\n\n\n\n0\n3dde6d26a8867975\n./.github/workflows/ci.yml\nUNKNOWN\ngithub-action-workflow\ngithub-action-workflow-usage-cataloger\n[{'path': '/.github/workflows/ci-all.yml', 'ac...\n[]\n\n[{'cpe': 'cpe:2.3:a:.\\/.github\\/workflows\\/ci....\n\n...\nNaN\nNaN\nNaN\nNaN\nclaude-code-action-sbom\nNaN\nNaN\nNaN\nNaN\nNaN\n\n\n1\n9166fd4b121e55f3\n./.github/workflows/test-base-action.yml\nUNKNOWN\ngithub-action-workflow\ngithub-action-workflow-usage-cataloger\n[{'path': '/.github/workflows/ci-all.yml', 'ac...\n[]\n\n[{'cpe': 'cpe:2.3:a:.\\/.github\\/workflows\\/tes...\n\n...\nNaN\nNaN\nNaN\nNaN\nclaude-code-action-sbom\nNaN\nNaN\nNaN\nNaN\nNaN\n\n\n2\n95afc7fec8addb9b\n./.github/workflows/test-custom-executables.yml\nUNKNOWN\ngithub-action-workflow\ngithub-action-workflow-usage-cataloger\n[{'path': '/.github/workflows/ci-all.yml', 'ac...\n[]\n\n[{'cpe': 'cpe:2.3:a:.\\/.github\\/workflows\\/tes...\n\n...\nNaN\nNaN\nNaN\nNaN\nclaude-code-action-sbom\nNaN\nNaN\nNaN\nNaN\nNaN\n\n\n3\nf535590207532289\n./.github/workflows/test-mcp-servers.yml\nUNKNOWN\ngithub-action-workflow\ngithub-action-workflow-usage-cataloger\n[{'path': '/.github/workflows/ci-all.yml', 'ac...\n[]\n\n[{'cpe': 'cpe:2.3:a:.\\/.github\\/workflows\\/tes...\n\n...\nNaN\nNaN\nNaN\nNaN\nclaude-code-action-sbom\nNaN\nNaN\nNaN\nNaN\nNaN\n\n\n4\nbdedac1ea6288e33\n./.github/workflows/test-settings.yml\nUNKNOWN\ngithub-action-workflow\ngithub-action-workflow-usage-cataloger\n[{'path': '/.github/workflows/ci-all.yml', 'ac...\n[]\n\n[{'cpe': 'cpe:2.3:a:.\\/.github\\/workflows\\/tes...\n\n...\nNaN\nNaN\nNaN\nNaN\nclaude-code-action-sbom\nNaN\nNaN\nNaN\nNaN\nNaN\n\n\n\n\n5 rows × 30 columns",
+    "crumbs": [
+      "SBOMs",
+      "Generación de SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/generacion_sbom.html#exploración-de-los-resultados",
+    "href": "sbom/generacion_sbom.html#exploración-de-los-resultados",
+    "title": "Generación de SBOMs",
+    "section": "Exploración de los Resultados",
+    "text": "Exploración de los Resultados\nCon los datos en un DataFrame, podemos realizar diversas consultas y análisis. Por ejemplo, podemos ver cuántos artefactos se encontraron por cada repositorio.\n\ndf_all['repo'].value_counts()\n\nrepo\nopencode-sbom              775\nclaude-code-action-sbom     37\ngenai-code-review-sbom       5\nName: count, dtype: int64\n\n\nTambién podemos ver las licencias más comunes encontradas en todas las dependencias.\n\ndf_all['licenses'].explode().value_counts().head(10)\n\nlicenses\n{'value': 'MIT', 'spdxExpression': 'MIT', 'type': 'declared', 'urls': [], 'locations': [{'path': '/base-action/package-lock.json', 'accessPath': '/base-action/package-lock.json', 'annotations': {'evidence': 'primary'}}]}    8\nName: count, dtype: int64",
+    "crumbs": [
+      "SBOMs",
+      "Generación de SBOMs"
+    ]
+  },
+  {
+    "objectID": "sbom/generacion_sbom.html#cómo-añadir-nuevos-repositorios-al-análisis",
+    "href": "sbom/generacion_sbom.html#cómo-añadir-nuevos-repositorios-al-análisis",
+    "title": "Generación de SBOMs",
+    "section": "Cómo Añadir Nuevos Repositorios al Análisis",
+    "text": "Cómo Añadir Nuevos Repositorios al Análisis\nEl proyecto está diseñado para que sea sencillo añadir nuevos repositorios al proceso de generación de SBOMs. El sistema utiliza Git submodules para gestionar los repositorios externos.\n\n1. Edita el archivo data/repos.json\nAbre data/repos.json y agrega nuevos repositorios con esta estructura:\n{\n  \"url\": \"URL_DEL_REPOSITORIO_EN_GITHUB.git\",\n  \"path\": \"data/repos/NOMBRE_DEL_REPOSITORIO\"\n}\n\nurl: La URL .git del repositorio\npath: Ruta local donde se clonará (usa data/repos/{nombre})\n\n\n\n2. Ejecuta en la terminal (esto clona los repositorios y los agrega como submódulos):\nuv run scripts/add_submodules.py && git submodule update --init --recursive\n\n\n3. Ejecuta la generación de SBOMs nuevamente:\nuv run scripts/generate_sboms.py\nO desde el notebook: - Reinicia el kernel - Ejecuta la celda con !python ../../scripts/generate_sboms.py",
+    "crumbs": [
+      "SBOMs",
+      "Generación de SBOMs"
+    ]
+  },
+  {
+    "objectID": "core.html",
+    "href": "core.html",
+    "title": "core",
+    "section": "",
+    "text": "source\n\nfoo\n\ndef foo(\n    \n):\n\nCall self as a function."
+  },
+  {
+    "objectID": "vuln/explicacion_script_codeql.html",
+    "href": "vuln/explicacion_script_codeql.html",
+    "title": "CodeQL Script detallado",
+    "section": "",
+    "text": "Ubicación: scripts/generate_codeql.py\nMódulo importado en: - nbs/vuln/generacion_codeql.ipynb (para ejecutar análisis) - Este notebook (para documentación)\nEste archivo contiene la clase CodeQLAnalyzer, responsable de orquestar el análisis de seguridad estático sobre múltiples repositorios. Fue diseñado siguiendo el mismo patrón que scripts/generate_sboms.py, proporcionando una interfaz consistente para automatizar análisis de seguridad.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CodeQL Script detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_codeql.html#acerca-de-este-archivo",
+    "href": "vuln/explicacion_script_codeql.html#acerca-de-este-archivo",
+    "title": "CodeQL Script detallado",
+    "section": "",
+    "text": "Ubicación: scripts/generate_codeql.py\nMódulo importado en: - nbs/vuln/generacion_codeql.ipynb (para ejecutar análisis) - Este notebook (para documentación)\nEste archivo contiene la clase CodeQLAnalyzer, responsable de orquestar el análisis de seguridad estático sobre múltiples repositorios. Fue diseñado siguiendo el mismo patrón que scripts/generate_sboms.py, proporcionando una interfaz consistente para automatizar análisis de seguridad.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CodeQL Script detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_codeql.html#cómo-se-usa-en-los-notebooks",
+    "href": "vuln/explicacion_script_codeql.html#cómo-se-usa-en-los-notebooks",
+    "title": "CodeQL Script detallado",
+    "section": "Cómo se Usa en los Notebooks",
+    "text": "Cómo se Usa en los Notebooks\nEn generacion_codeql.ipynb:\nfrom generate_codeql import CodeQLAnalyzer\nanalizador = CodeQLAnalyzer(repos_path, output_path)\nanalizador.run()  # Ejecuta todo el flujo de análisis",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CodeQL Script detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_codeql.html#descripción-general",
+    "href": "vuln/explicacion_script_codeql.html#descripción-general",
+    "title": "CodeQL Script detallado",
+    "section": "Descripción General",
+    "text": "Descripción General\nCodeQL es una herramienta de análisis de código desarrollada por GitHub que permite: - Escanear código fuente en busca de vulnerabilidades y problemas de seguridad - Detectar defectos comunes de programación - Ejecutar consultas personalizadas sobre estructura de código - Generar reportes en formato SARIF (Static Analysis Results Interchange Format)\nEl archivo generate_codeql.py automatiza este proceso para múltiples repositorios, similar a cómo generate_sboms.py automatiza la generación de SBOMs con Syft.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CodeQL Script detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_codeql.html#arquitectura",
+    "href": "vuln/explicacion_script_codeql.html#arquitectura",
+    "title": "CodeQL Script detallado",
+    "section": "Arquitectura",
+    "text": "Arquitectura\n\nClase Principal: CodeQLAnalyzer\nLa clase CodeQLAnalyzer es el componente central que coordina todo el flujo de análisis.\nclass CodeQLAnalyzer:\n    def __init__(self, repos_path: str, output_path: str):\n        self.repos_path = Path(repos_path)          # Directorio con repositorios\n        self.output_path = Path(output_path)        # Directorio de salida para resultados\n        self.project_root = Path(__file__).resolve().parents[1]\n        self.codeql_bin = \"codeql\"                  # Nombre ejecutable de CodeQL\n        self.dry_run = False                         # Modo preview sin ejecución\n        self.codeql_path: str | None = None         # Ruta completa a ejecutable\n\n\nFlujo de Ejecución\nmain()\n  └─&gt; CodeQLAnalyzer.run()\n       ├─&gt; discover_repositories()                   [Descubre repos en data/repos/]\n       ├─&gt; Para cada repositorio:\n       │   ├─&gt; run_codeql(repo_path)                [Ejecuta análisis]\n       │   │   ├─&gt; _detectar_lenguaje_simple()     [Identifica lenguaje principal]\n       │   │   ├─&gt; _crear_base_datos_codeql()      [Crea DB de CodeQL]\n       │   │   ├─&gt; _resolver_query_suite()         [Busca suite compilada, fallback a pack]\n       │   │   └─&gt; _analizar_base_datos_codeql()   [Ejecuta análisis con suite]\n       │   ├─&gt; parse_sarif()                        [Convierte SARIF a JSON normalizado]\n       │   └─&gt; save_analysis()                      [Guarda {repo}-codeql.json]\n       └─&gt; Resumen final",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CodeQL Script detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_codeql.html#métodos-principales",
+    "href": "vuln/explicacion_script_codeql.html#métodos-principales",
+    "title": "CodeQL Script detallado",
+    "section": "Métodos Principales",
+    "text": "Métodos Principales\n\n1. discover_repositories()\nPropósito: Escanear el directorio data/repos/ para encontrar todos los repositorios disponibles.\nFuncionamiento:\ndef discover_repositories(self) -&gt; list[str]:\n    # 1. Valida que data/repos/ existe\n    self._validar_directorio_repos()\n    \n    # 2. Lista todos los subdirectorios\n    repositorios = sorted(\n        str(ruta.relative_to(self.project_root))\n        for ruta in self.repos_path.iterdir()\n        if ruta.is_dir()  # Solo directorios\n    )\n    \n    # 3. Devuelve lista ordenada\n    return repositorios\nEjemplo de salida:\n[\n    'data/repos/claude-code-action',\n    'data/repos/genai-code-review',\n    'data/repos/opencode'\n]\nExcepciones: - FileNotFoundError: Si data/repos/ no existe - NotADirectoryError: Si la ruta no es un directorio\n\n\n2. _detectar_lenguaje_simple(ruta_repo)\nPropósito: Detectar el lenguaje principal del repositorio y retornar UNO solo (el más frecuente).\nEstrategia:\ndef _detectar_lenguaje_simple(self, ruta_repo: Path) -&gt; str | None:\n    # 1. Define mapeo de extensiones a lenguajes\n    extensiones = {\n        \".py\": \"python\",\n        \".js\": \"javascript\",\n        \".ts\": \"javascript\",  # TypeScript → JavaScript\n        \".java\": \"java\",\n        # ... más extensiones\n    }\n    \n    # 2. Escanea archivos y cuenta por lenguaje\n    conteos = {}\n    for archivo in ruta_repo.rglob(\"*\"):\n        if archivo.is_file() and archivo.suffix.lower() in extensiones:\n            lenguaje = extensiones[archivo.suffix.lower()]\n            conteos[lenguaje] = conteos.get(lenguaje, 0) + 1\n    \n    # 3. Devuelve el lenguaje más frecuente\n    if not conteos:\n        return None  # No detectó nada\n    \n    return max(conteos, key=conteos.get)\nEjemplo: - Entrada: Repo con 150 archivos .py, 30 .js, 5 .yml - Salida: \"python\" (lenguaje más frecuente)\n¿Por qué un solo lenguaje? - CodeQL procesa mejor repos de un solo lenguaje - Reduce falsos positivos de análisis cruzados - Mejora rendimiento del análisis - Para análisis multi-lenguaje, ejecutar script varias veces\nLenguajes soportados: - Python, JavaScript/TypeScript, Java, C/C++, C#, Go\n\n\n3. _crear_base_datos_codeql(ruta_repo, lenguaje)\nPropósito: Crear la base de datos de CodeQL que indexa el código fuente.\nFuncionamiento:\ndef _crear_base_datos_codeql(self, ruta_repo: Path, lenguaje: str) -&gt; Path:\n    # 1. Crear directorio temporal para la DB\n    db_path = self.temp_dir / f\"{ruta_repo.name}_db\"\n    \n    # 2. Construir comando CodeQL\n    comando = [\n        \"codeql\",\n        \"database\", \"create\",\n        str(db_path),\n        \"--language\", lenguaje,\n        \"--source-root\", str(ruta_repo),\n        \"--overwrite\"  # Permitir sobrescribir DBs existentes\n    ]\n    # Ejecuta: codeql database create /tmp/codeql_XXX/repo_db \\\n    #            --language python \\\n    #            --source-root /home/user/repo/ \\\n    #            --overwrite\n    \n    # 3. Ejecutar comando\n    resultado = subprocess.run(comando, ...)\n    \n    # 4. Validar éxito y devolver ruta\n    return db_path\nQué hace CodeQL: - Analiza la estructura sintáctica del código - Construye un grafo de dependencias - Indexa todas las definiciones y usos de variables - Almacena en base de datos optimizada para consultas\nFlag --overwrite: - Permite re-crear la base de datos incluso si ya existe - Útil para ejecuciones idempotentes del script - Evita conflictos si se corre el análisis múltiples veces\nErrores comunes: - CodeQL no instalado: RuntimeError: CodeQL CLI is not installed - Lenguaje no detectado: El análisis se omite\n\n\n4.a _resolver_query_suite(lenguaje)\nPropósito: Resolver la suite de consultas óptima para el lenguaje (con fallback automático).\nEstrategia de fallback:\ndef _resolver_query_suite(self, lenguaje: str) -&gt; str:\n    # 1. INTENTO: Buscar suite compilada (más rápida)\n    codeql_packages = Path.home() / \".codeql\" / \"packages\" / \"codeql\"\n    suite_pattern = f\"{lenguaje}-queries/*/codeql-suites/{lenguaje}-security-and-quality.qls\"\n    suite_files = list(codeql_packages.glob(suite_pattern))\n    \n    if suite_files:\n        # Suite compilada encontrada (ej: Python sí tiene)\n        return str(suite_files[0])  # ~.codeql/packages/.../python-security-and-quality.qls\n    \n    # 2. FALLBACK: Usar query pack directo (universal)\n    # Funciona incluso sin suite compilada (ej: JavaScript)\n    return f\"codeql/{lenguaje}-queries\"\nComportamiento: - Python: ~/.codeql/packages/codeql/python-queries/.../python-security-and-quality.qls ✅ Suite compilada ⚡ Rápido - JavaScript: codeql/javascript-queries ✅ Query pack 🔄 Más lento pero funciona\n\n\n4.b _analizar_base_datos_codeql(db_path, lenguaje)\nPropósito: Ejecutar consultas de seguridad sobre la base de datos y generar SARIF.\nFuncionamiento:\ndef _analizar_base_datos_codeql(self, db_path: Path, lenguaje: str, repo_name: str) -&gt; str:\n    # 1. Resolver la suite óptima\n    query_suite = self._resolver_query_suite(lenguaje)\n    \n    # 2. Construir comando CodeQL\n    comando = [\n        \"codeql\", \"database\", \"analyze\",\n        str(db_path),\n        query_suite,  # Suite compilada O query pack\n        \"--format=sarifv2.1.0\",  # Versión SARIF\n        f\"--output={str(sarif_output)}\"  # Archivo (no stdout)\n    ]\n    \n    # 3. Ejecutar análisis\n    resultado = subprocess.run(comando, ...)\n    \n    # 4. Guardar resultado en archivo y devolver contenido\n    if sarif_output.exists():\n        return sarif_output.read_text(encoding=\"utf-8\")\nFormato SARIF (versión 2.1.0): SARIF es el estándar de la industria para reportes de análisis estático.\n\n{\n    \"$schema\": \"https://json.schemastore.org/sarif-2.1.0.json\",\n    \"version\": \"2.1.0\",\n    \"runs\": [\n      {\n        \"tool\": {\n          \"driver\": {\n            \"name\": \"CodeQL\",\n            \"organization\": \"GitHub\",\n            \"semanticVersion\": \"2.25.1\",\n            \"notifications\": [\n              {\n                \"id\": \"js/diagnostics/successfully-extracted-files\",\n                \"name\": \"js/diagnostics/successfully-extracted-files\",\n                \"shortDescription\": { \"text\": \"Extracted files\" },\n                \"fullDescription\": {\n                    \"text\": \"Lists all files in the source code directory that were extracted.\"\n                },\n                \"defaultConfiguration\": { \"enabled\": true },\n                \"properties\": {\n                    \"tags\": [\"successfully-extracted-files\"],\n                    \"description\": \"Lists all files in the source code directory that were extracted.\",\n                    \"id\": \"js/diagnostics/successfully-extracted-files\",\n                    \"kind\": \"diagnostic\",\n                    \"name\": \"Extracted files\"\n                }\n              },\n    ]},\n}}]}\n\n\n5. parse_sarif(sarif_data)\nPropósito: Convertir la salida SARIF de CodeQL a un formato JSON normalizado y aplanado para mejor usabilidad.\nFuncionamiento:\ndef parse_sarif(self, sarif_data: str) -&gt; dict:\n    # 1. Parsear JSON SARIF\n    sarif_json = json.loads(sarif_data)\n    \n    # 2. Inicializar estructura de salida\n    resultados = {\n        \"total_issues\": 0,\n        \"issues_by_severity\": {\n            \"error\": 0,\n            \"warning\": 0,\n            \"note\": 0\n        },\n        \"issues\": [],      # Array de hallazgos individuales\n        \"sarif_metadata\": {}    # Información de la herramienta\n    }\n    \n    # 3. Extraer información de la herramienta\n    resultados[\"sarif_metadata\"] = self._extraer_tool_metadata(sarif_json)\n    \n    # 4. Procesar cada resultado SARIF\n    runs = sarif_json.get(\"runs\", [])\n    for run in runs:\n        for resultado_sarif in run.get(\"results\", []):\n            # Convertir a formato normalizado\n            issue = self._procesar_resultado_sarif(resultado_sarif)\n            resultados[\"issues\"].append(issue)\n            resultados[\"total_issues\"] += 1\n            \n            # Contar por severidad\n            nivel = resultado_sarif.get(\"level\", \"warning\")\n            resultados[\"issues_by_severity\"][nivel] += 1\n    \n    return resultados\nSalida normalizada:\n{\n  \"total_issues\": 5,\n  \"issues_by_severity\": {\n    \"error\": 1,\n    \"warning\": 3,\n    \"note\": 1\n  },\n  \"issues\": [\n    {\n      \"rule_id\": \"py/sql-injection\",\n      \"level\": \"warning\",\n      \"message\": \"Possible SQL injection\",\n      \"file\": \"src/database.py\",\n      \"region\": { \"startLine\": 42 }\n    }\n  ]\n}\n\n\n6. save_analysis(repo_name, analysis_data)\nPropósito: Guardar el análisis normalizado en data/results/{repo-name}-codeql.json.\nFuncionamiento:\ndef save_analysis(self, repo_name: str, analysis_data: dict) -&gt; Path:\n    # 1. Validar entrada\n    if not repo_name:\n        raise ValueError(\"El nombre del repositorio no puede estar vacio.\")\n    \n    # 2. Crear directorio de salida si no existe\n    self.output_path.mkdir(parents=True, exist_ok=True)\n    \n    # 3. Determinar ruta de salida\n    ruta_salida = self.output_path / f\"{repo_name}-codeql.json\"\n    \n    # 4. Serializar y guardar\n    contenido_json = json.dumps(analysis_data, ensure_ascii=False, indent=2)\n    ruta_salida.write_text(contenido_json, encoding=\"utf-8\")\n    \n    # 5. Registrar en log\n    LOGGER.info(f\"Analisis CodeQL guardado en {ruta_salida}\")\n    \n    return ruta_salida\nArchivos generados:\ndata/results/\n  ├── claude-code-action-codeql.json\n  ├── genai-code-review-codeql.json\n  └── opencode-codeql.json\n\n\n7. run_codeql(repo_path)\nPropósito: Orquestar todo el flujo de análisis para un repositorio individual.\nFlujo:\ndef run_codeql(self, repo_path: str) -&gt; str:\n    # 1. Validar que repo existe\n    ruta_repo = self.project_root / repo_path\n    # ... validaciones ...\n    \n    # 2. Detectar lenguaje PRINCIPAL (el más frecuente)\n    lenguaje = self._detectar_lenguaje_simple(ruta_repo)\n    if not lenguaje:\n        # Devolver SARIF vacío si no detectó nada\n        LOGGER.warning(f\"No se detectó lenguaje en {ruta_repo.name}\")\n        return json.dumps({\"runs\": []})\n    \n    LOGGER.info(f\"Lenguaje detectado: {lenguaje}\")\n    \n    # 3. Crear base de datos con lenguaje explícito\n    db_path = self._crear_base_datos_codeql(ruta_repo, lenguaje)\n    \n    try:\n        # 4. Analizar (con estrategia de fallback de suite)\n        sarif_output = self._analizar_base_datos_codeql(db_path, lenguaje, ruta_repo.name)\n        return sarif_output\n    finally:\n        # 5. Limpiar base de datos temporal\n        if db_path.exists():\n            shutil.rmtree(db_path, ignore_errors=True)\nDiagrama de Flujo:\nRepositorio Git\n    ↓\n[detectar lenguaje] → Python | JavaScript | Java\n    ↓\n[crear DB] → codeql database create --language {lenguaje} --overwrite\n    ↓\n[resolver suite] → Suite compilada O Query pack (fallback)\n\n    ↓\n\n[analizar] → codeql database analyze WITH suite{repo}-codeql.json\n\n    ↓    ↓\n\nSARIF JSON 2.1.0Parse + Normalizar\n    ↓",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CodeQL Script detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_codeql.html#métodos-de-orquestación",
+    "href": "vuln/explicacion_script_codeql.html#métodos-de-orquestación",
+    "title": "CodeQL Script detallado",
+    "section": "Métodos de Orquestación",
+    "text": "Métodos de Orquestación\n\nrun()\nPropósito: Método principal que coordina el análisis de todos los repositorios.\nLógica:\ndef run(self):\n    # 1. Descubrir repositorios\n    repositorios = self.discover_repositories()\n    \n    # 2. Para cada repositorio:\n    for indice, repo_path in enumerate(repositorios, start=1):\n        # Log de progreso: [1/3] Procesando data/repos/claude-code-action\n        LOGGER.info(f\"[{indice}/{len(repositorios)}] ...\")\n        \n        if self.dry_run:\n            # Mostrar qué se haría sin ejecutar\n            continue\n        \n        try:\n            # 3. Ejecutar análisis\n            sarif_data = self.run_codeql(repo_path)\n            \n            # 4. Procesar resultados\n            analysis = self.parse_sarif(sarif_data)\n            \n            # 5. Guardar\n            self.save_analysis(ruta_repo.name, analysis)\n            \n            repositorios_analizados += 1\n        except Exception as error:\n            # Manejar errores, limpiar, y continuar\n            errores += 1\n            self._eliminar_archivos_parciales(ruta_repo.name)\n            LOGGER.error(f\"Error al procesar {repo_path}: {error}\")\n    \n    # 6. Resumen final\n    LOGGER.info(f\"Resumen final | total_repos=3 | ...\")\nSalida:\nINFO | [1/3] Procesando repositorio data/repos/claude-code-action\nINFO | Usando CodeQL CLI: /usr/local/bin/codeql\nINFO | [1/3] Analisis CodeQL guardado en data/results/claude-code-action-codeql.json\nINFO | [2/3] Procesando repositorio data/repos/genai-code-review\nINFO | [2/3] Analisis CodeQL guardado en data/results/genai-code-review-codeql.json\n...\nINFO | Resumen final | total_repos=3 | repos_analizados=3 | archivos_generados=3 | omitidos=0 | errores=0",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CodeQL Script detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_codeql.html#manejo-de-errores",
+    "href": "vuln/explicacion_script_codeql.html#manejo-de-errores",
+    "title": "CodeQL Script detallado",
+    "section": "Manejo de Errores",
+    "text": "Manejo de Errores\n\nNiveles de Validación\n\nDirectorios:\n\n_validar_directorio_repos(): Verifica que data/repos/ existe y es directorio\n_validar_directorio_salida(): Verifica que ruta de salida es válida\n\nRepositorio Individual:\n\nExiste: FileNotFoundError\nEs directorio: NotADirectoryError\nNo está vacío: ValueError\n\nAnálisis:\n\nCodeQL instalado: RuntimeError con mensaje instructivo\nBase de datos creada: RuntimeError con detalle de stderr\nSARIF válido: RuntimeError si JSON no es válido\n\n\n\n\nRecuperación de Errores\n\ntry:\n    # Intentar análisis\n    sarif_data = self.run_codeql(repo_path)\nexcept Exception as error:\n    # 1. Limpiar archivos parciales\n    self._eliminar_archivos_parciales(ruta_repo.name)\n    \n    # 2. Registrar error\n    LOGGER.error(f\"Error: {error}\")\n    \n    # 3. Continuar con siguiente repo\n    errores += 1",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CodeQL Script detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_codeql.html#uso-del-script",
+    "href": "vuln/explicacion_script_codeql.html#uso-del-script",
+    "title": "CodeQL Script detallado",
+    "section": "Uso del Script",
+    "text": "Uso del Script\n\nEjecución Básica\npython scripts/generate_codeql.py\n\n\nVista Previa sin Ejecutar (Dry-run)\npython scripts/generate_codeql.py --dry-run\nSalida:\nINFO | [1/3] Dry-run: se generaria data/results/claude-code-action-codeql.json\nINFO | [2/3] Dry-run: se generaria data/results/genai-code-review-codeql.json\nINFO | [3/3] Dry-run: se generaria data/results/opencode-codeql.json\n\n\nCon Rutas Personalizadas\npython scripts/generate_codeql.py \\\n  --repos-path /path/to/repos \\\n  --output-path /path/to/output\n\n\nArgumentos\n\n--repos-path: Directorio con repositorios (default: data/repos)\n--output-path: Directorio de salida (default: data/results)\n--dry-run: Mostrar qué se haría sin ejecutar",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CodeQL Script detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_codeql.html#esquema-de-salida-json",
+    "href": "vuln/explicacion_script_codeql.html#esquema-de-salida-json",
+    "title": "CodeQL Script detallado",
+    "section": "Esquema de Salida JSON",
+    "text": "Esquema de Salida JSON\nCada archivo {repo}-codeql.json contiene:\n\n{\n  \"total_issues\": 15,\n  \"issues_by_severity\": {\n    \"error\": 2,\n    \"warning\": 10,\n    \"note\": 3\n  },\n  \"issues\": [\n    {\n      \"rule_id\": \"py/sql-injection\",\n      \"rule_index\": 42,\n      \"level\": \"warning\",\n      \"message\": \"User input used in SQL query without sanitization\",\n      \"file\": \"src/database.py\",\n      \"region\": {\n        \"startLine\": 156,\n        \"endLine\": 156,\n        \"startColumn\": 21,\n        \"endColumn\": 45\n      },\n      \"kind\": \"fail\",\n      \"properties\": {}\n    }\n  ],\n  \"sarif_metadata\": {\n    \"version\": \"2.1.0\",\n    \"schema_uri\": \"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/...\",\n    \"tool\": {\n      \"name\": \"CodeQL\",\n      \"version\": \"2.11.6\",\n      \"information_uri\": \"https://codeql.github.com\"\n    }\n  }\n}",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CodeQL Script detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/explicacion_script_codeql.html#resumen-scriptsgenerate_codeql.py",
+    "href": "vuln/explicacion_script_codeql.html#resumen-scriptsgenerate_codeql.py",
+    "title": "CodeQL Script detallado",
+    "section": "Resumen: scripts/generate_codeql.py",
+    "text": "Resumen: scripts/generate_codeql.py\nEl archivo generate_codeql.py implementa un analizador de seguridad robusto que:\n\nDescubre automáticamente múltiples repositorios\nDetecta el lenguaje principal presente usando conteo de extensiones\nCrea bases de datos de CodeQL indexadas con --overwrite para idempotencia\nResuelve suite de consultas (compilada → fallback a query pack)\nEjecuta consultas de seguridad y calidad sobre la DB\nConvierte SARIF 2.1.0 a JSON normalizado\nManeja errores elegantemente y continúa procesando\nProporciona resumen de estadísticas",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CodeQL Script detallado"
+    ]
+  },
+  {
+    "objectID": "vuln/taxonomia_vulnerabilidades.html",
+    "href": "vuln/taxonomia_vulnerabilidades.html",
+    "title": "CVE, CWE, CVSS, NVD y MITRE ATT&CK",
+    "section": "",
+    "text": "Cuando se estudian vulnerabilidades, es habitual encontrarse con siglas que parecen referirse a lo mismo, pero que en realidad cumplen funciones distintas. Distinguir entre CWE, CVE, CVSS, NVD y MITRE ATT&CK ayuda a interpretar mejor reportes técnicos, priorizar hallazgos y comunicar riesgos con mayor precisión.\nEn términos generales, estas nociones responden preguntas diferentes:\n\nCWE: ¿qué tipo de debilidad o error está presente?\nCVE: ¿qué vulnerabilidad pública y específica fue identificada?\nCVSS: ¿qué tan severa parece esa vulnerabilidad?\nNVD: ¿dónde se consolida información técnica y de priorización sobre CVEs?\nATT&CK: ¿cómo podría actuar un adversario una vez que explota o aprovecha ciertas condiciones del sistema?",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CVE, CWE, CVSS, NVD y MITRE ATT&CK"
+    ]
+  },
+  {
+    "objectID": "vuln/taxonomia_vulnerabilidades.html#por-qué-conviene-distinguir-estos-conceptos",
+    "href": "vuln/taxonomia_vulnerabilidades.html#por-qué-conviene-distinguir-estos-conceptos",
+    "title": "CVE, CWE, CVSS, NVD y MITRE ATT&CK",
+    "section": "",
+    "text": "Cuando se estudian vulnerabilidades, es habitual encontrarse con siglas que parecen referirse a lo mismo, pero que en realidad cumplen funciones distintas. Distinguir entre CWE, CVE, CVSS, NVD y MITRE ATT&CK ayuda a interpretar mejor reportes técnicos, priorizar hallazgos y comunicar riesgos con mayor precisión.\nEn términos generales, estas nociones responden preguntas diferentes:\n\nCWE: ¿qué tipo de debilidad o error está presente?\nCVE: ¿qué vulnerabilidad pública y específica fue identificada?\nCVSS: ¿qué tan severa parece esa vulnerabilidad?\nNVD: ¿dónde se consolida información técnica y de priorización sobre CVEs?\nATT&CK: ¿cómo podría actuar un adversario una vez que explota o aprovecha ciertas condiciones del sistema?",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CVE, CWE, CVSS, NVD y MITRE ATT&CK"
+    ]
+  },
+  {
+    "objectID": "vuln/taxonomia_vulnerabilidades.html#cwe-categorías-de-debilidades",
+    "href": "vuln/taxonomia_vulnerabilidades.html#cwe-categorías-de-debilidades",
+    "title": "CVE, CWE, CVSS, NVD y MITRE ATT&CK",
+    "section": "CWE: categorías de debilidades",
+    "text": "CWE: categorías de debilidades\nUn CWE describe una debilidad común que puede dar origen a vulnerabilidades. No apunta, en principio, a un producto ni a un incidente puntual, sino a un patrón de error o deficiencia. Por eso resulta especialmente útil en etapas de diseño, programación, revisión y enseñanza, ya que permite hablar de causas recurrentes y no solo de casos concretos.\nDesde esta perspectiva, un CWE ayuda a responder cuál es la naturaleza del problema: por ejemplo, exposición de información, validación insuficiente, errores de autorización o manejo inseguro de entradas. En la práctica, esto vuelve a CWE muy útil para procesos de desarrollo seguro, capacitación y remediación estructural.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CVE, CWE, CVSS, NVD y MITRE ATT&CK"
+    ]
+  },
+  {
+    "objectID": "vuln/taxonomia_vulnerabilidades.html#cve-vulnerabilidades-específicas-y-públicas",
+    "href": "vuln/taxonomia_vulnerabilidades.html#cve-vulnerabilidades-específicas-y-públicas",
+    "title": "CVE, CWE, CVSS, NVD y MITRE ATT&CK",
+    "section": "CVE: vulnerabilidades específicas y públicas",
+    "text": "CVE: vulnerabilidades específicas y públicas\nUn CVE identifica una vulnerabilidad concreta, pública y distinguible en un producto, biblioteca, versión o sistema determinado. A diferencia de un CWE, que es una clase de debilidad, un CVE apunta a una instancia específica que puede ser rastreada y discutida de forma estandarizada.\nEsto permite que fabricantes, equipos de seguridad, analistas y herramientas hablen del mismo problema usando un identificador común. En otras palabras, el CVE funciona como una referencia compartida para coordinar análisis, priorización, mitigación y seguimiento.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CVE, CWE, CVSS, NVD y MITRE ATT&CK"
+    ]
+  },
+  {
+    "objectID": "vuln/taxonomia_vulnerabilidades.html#cvss-severidad-y-priorización",
+    "href": "vuln/taxonomia_vulnerabilidades.html#cvss-severidad-y-priorización",
+    "title": "CVE, CWE, CVSS, NVD y MITRE ATT&CK",
+    "section": "CVSS: severidad y priorización",
+    "text": "CVSS: severidad y priorización\nEl CVSS es un sistema de puntaje que busca estimar la severidad de una vulnerabilidad. No describe la debilidad de fondo ni reemplaza el análisis contextual, pero entrega una base cuantitativa para priorizar. En términos generales, resume qué tan serio podría ser un problema considerando variables como impacto y facilidad de explotación.\nPor eso, CVSS es útil para ordenar trabajo y comparar hallazgos, aunque no debería interpretarse de manera aislada. Un puntaje alto no siempre implica el mismo nivel de riesgo en todos los entornos, y uno moderado puede resultar crítico si afecta un activo especialmente sensible.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CVE, CWE, CVSS, NVD y MITRE ATT&CK"
+    ]
+  },
+  {
+    "objectID": "vuln/taxonomia_vulnerabilidades.html#nvd-consolidación-de-información-sobre-vulnerabilidades",
+    "href": "vuln/taxonomia_vulnerabilidades.html#nvd-consolidación-de-información-sobre-vulnerabilidades",
+    "title": "CVE, CWE, CVSS, NVD y MITRE ATT&CK",
+    "section": "NVD: consolidación de información sobre vulnerabilidades",
+    "text": "NVD: consolidación de información sobre vulnerabilidades\nLa National Vulnerability Database (NVD) opera como una base de datos que reúne y enriquece información asociada a vulnerabilidades públicas. En la práctica, es uno de los lugares más importantes para consultar detalles adicionales sobre un CVE, incluyendo puntajes, referencias y metadatos útiles para priorización técnica.\nVisto de forma simple, si el CVE entrega la identidad de una vulnerabilidad, la NVD aporta una capa adicional de contexto para su análisis y gestión. Esto la vuelve particularmente relevante para herramientas automatizadas y flujos de respuesta que necesitan centralizar información pública sobre fallas conocidas.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CVE, CWE, CVSS, NVD y MITRE ATT&CK"
+    ]
+  },
+  {
+    "objectID": "vuln/taxonomia_vulnerabilidades.html#dónde-entra-mitre-attck",
+    "href": "vuln/taxonomia_vulnerabilidades.html#dónde-entra-mitre-attck",
+    "title": "CVE, CWE, CVSS, NVD y MITRE ATT&CK",
+    "section": "¿Dónde entra MITRE ATT&CK?",
+    "text": "¿Dónde entra MITRE ATT&CK?\nMITRE ATT&CK no es un catálogo de vulnerabilidades, sino una base de conocimiento sobre tácticas y técnicas de adversarios observadas en escenarios reales. Su utilidad no está en decir qué debilidad existe en un sistema, sino en ayudar a describir cómo un atacante podría moverse, persistir, extraer credenciales o desplegar carga maliciosa.\nPor eso, ATT&CK complementa muy bien a CWE, CVE, CVSS y NVD. Mientras esas estructuras ayudan a identificar, clasificar y priorizar vulnerabilidades, ATT&CK ayuda a contextualizar el comportamiento adversario que podría aparecer antes, durante o después de una explotación.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CVE, CWE, CVSS, NVD y MITRE ATT&CK"
+    ]
+  },
+  {
+    "objectID": "vuln/taxonomia_vulnerabilidades.html#cómo-se-relacionan-entre-sí",
+    "href": "vuln/taxonomia_vulnerabilidades.html#cómo-se-relacionan-entre-sí",
+    "title": "CVE, CWE, CVSS, NVD y MITRE ATT&CK",
+    "section": "Cómo se relacionan entre sí",
+    "text": "Cómo se relacionan entre sí\nUna manera práctica de entender la relación entre estos conceptos es pensar el flujo de la siguiente forma:\n\nUn sistema puede contener una debilidad clasificada como CWE.\nEsa debilidad puede materializarse en una vulnerabilidad concreta registrada como CVE.\nEsa vulnerabilidad puede tener una severidad estimada mediante CVSS.\nLa información pública ampliada sobre ese caso puede consultarse en NVD.\nSi un atacante aprovecha esa condición, el comportamiento observado puede describirse con técnicas de MITRE ATT&CK.\n\nEste encadenamiento ayuda a pasar desde una visión puramente técnica del defecto a una comprensión más amplia del riesgo, la priorización y el posible comportamiento ofensivo asociado.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CVE, CWE, CVSS, NVD y MITRE ATT&CK"
+    ]
+  },
+  {
+    "objectID": "vuln/taxonomia_vulnerabilidades.html#relación-con-este-módulo",
+    "href": "vuln/taxonomia_vulnerabilidades.html#relación-con-este-módulo",
+    "title": "CVE, CWE, CVSS, NVD y MITRE ATT&CK",
+    "section": "Relación con este módulo",
+    "text": "Relación con este módulo\nEn este módulo, estas distinciones son especialmente útiles para leer mejor los resultados producidos por herramientas de análisis. Por ejemplo, cuando se inspeccionan vulnerabilidades conocidas en dependencias, suele aparecer el lenguaje de CVE, CVSS y catálogos públicos. A su vez, cuando se revisan problemas de seguridad desde el código o desde patrones de implementación, resulta más natural pensar en términos de CWE y de causas subyacentes.\nATT&CK agrega una capa adicional de valor pedagógico, porque permite conectar hallazgos técnicos con conductas adversarias más amplias. Así, el análisis no se queda solo en “qué falla existe”, sino que también ayuda a pensar “qué podría intentar hacer un atacante con esa condición”.",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CVE, CWE, CVSS, NVD y MITRE ATT&CK"
+    ]
+  },
+  {
+    "objectID": "vuln/taxonomia_vulnerabilidades.html#lista-de-referencias",
+    "href": "vuln/taxonomia_vulnerabilidades.html#lista-de-referencias",
+    "title": "CVE, CWE, CVSS, NVD y MITRE ATT&CK",
+    "section": "Lista de Referencias",
+    "text": "Lista de Referencias\n\nCVE Program\nCVSS Specification Document\nNational Vulnerability Database (NVD)\nUnderstanding the Differences Between CVE, CWE, and NVD\nCWE Vs. CVE Vs. CVSS: What Are the Differences?\nCWE Definitions - CVE Details\nMITRE ATT&CK",
+    "crumbs": [
+      "Vulnerabilidades",
+      "CVE, CWE, CVSS, NVD y MITRE ATT&CK"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_grype.html",
+    "href": "vuln/generacion_grype.html",
+    "title": "Análisis de Vulnerabilidades con Grype",
+    "section": "",
+    "text": "A continuación importaremos el módulo GrypeAnalyzer desde el archivo scripts/generate_grype.py.\n\nimport sys\nfrom pathlib import Path\nimport json\nimport pandas as pd\n\n# Agregar el directorio scripts al path para importar el modulo generate_grype\n# Este módulo contiene la clase GrypeAnalyzer que orquesta todo el análisis\nproject_root = Path().cwd().parent.parent\nscripts_path = project_root / \"scripts\"\nif str(scripts_path) not in sys.path:\n    sys.path.insert(0, str(scripts_path))\n\nprint(f\"Notebook working directory: {Path().cwd()}\")\nprint(f\"Project root: {project_root}\")\nprint(f\"Scripts path: {scripts_path}\")\nprint(f\"Importing from: generate_grype.py\")\n\nNotebook working directory: /workspaces/id_2026/nbs/vuln\nProject root: /workspaces/id_2026\nScripts path: /workspaces/id_2026/scripts\nImporting from: generate_grype.py\n\n\n\n# Importar la clase GrypeAnalyzer desde generate_grype.py\nfrom generate_grype import GrypeAnalyzer\n\nprint(\"✓ Importado correctamente: GrypeAnalyzer desde scripts/generate_grype.py\")\n\n✓ Importado correctamente: GrypeAnalyzer desde scripts/generate_grype.py",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Vulnerabilidades con Grype"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_grype.html#preparación-importar-scriptsgenerate_grype.py",
+    "href": "vuln/generacion_grype.html#preparación-importar-scriptsgenerate_grype.py",
+    "title": "Análisis de Vulnerabilidades con Grype",
+    "section": "",
+    "text": "A continuación importaremos el módulo GrypeAnalyzer desde el archivo scripts/generate_grype.py.\n\nimport sys\nfrom pathlib import Path\nimport json\nimport pandas as pd\n\n# Agregar el directorio scripts al path para importar el modulo generate_grype\n# Este módulo contiene la clase GrypeAnalyzer que orquesta todo el análisis\nproject_root = Path().cwd().parent.parent\nscripts_path = project_root / \"scripts\"\nif str(scripts_path) not in sys.path:\n    sys.path.insert(0, str(scripts_path))\n\nprint(f\"Notebook working directory: {Path().cwd()}\")\nprint(f\"Project root: {project_root}\")\nprint(f\"Scripts path: {scripts_path}\")\nprint(f\"Importing from: generate_grype.py\")\n\nNotebook working directory: /workspaces/id_2026/nbs/vuln\nProject root: /workspaces/id_2026\nScripts path: /workspaces/id_2026/scripts\nImporting from: generate_grype.py\n\n\n\n# Importar la clase GrypeAnalyzer desde generate_grype.py\nfrom generate_grype import GrypeAnalyzer\n\nprint(\"✓ Importado correctamente: GrypeAnalyzer desde scripts/generate_grype.py\")\n\n✓ Importado correctamente: GrypeAnalyzer desde scripts/generate_grype.py",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Vulnerabilidades con Grype"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_grype.html#configuración",
+    "href": "vuln/generacion_grype.html#configuración",
+    "title": "Análisis de Vulnerabilidades con Grype",
+    "section": "Configuración",
+    "text": "Configuración\n\n# Configurar rutas\nrepos_path = project_root / \"data\" / \"repos\"\noutput_path = project_root / \"data\" / \"results\"\n\n# Crear analizador\nanalizador = GrypeAnalyzer(\n    repos_path=str(repos_path),\n    output_path=str(output_path)\n)\n\n# Configurar para ejecución normal (no dry-run)\nanalizador.dry_run = False\n\nprint(f\"Repos path: {repos_path}\")\nprint(f\"Output path: {output_path}\")\nprint(f\"Dry run: {analizador.dry_run}\")\n\nRepos path: /workspaces/id_2026/data/repos\nOutput path: /workspaces/id_2026/data/results\nDry run: False",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Vulnerabilidades con Grype"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_grype.html#ejecución-análisis-de-vulnerabilidades-usando-scriptsgenerate_grype.py",
+    "href": "vuln/generacion_grype.html#ejecución-análisis-de-vulnerabilidades-usando-scriptsgenerate_grype.py",
+    "title": "Análisis de Vulnerabilidades con Grype",
+    "section": "Ejecución: Análisis de Vulnerabilidades (usando scripts/generate_grype.py)",
+    "text": "Ejecución: Análisis de Vulnerabilidades (usando scripts/generate_grype.py)\nAhora ejecutaremos el análisis de vulnerabilidades sobre todos los repositorios descubiertos. El script generate_grype.py manejará automáticamente la orquestación completa.\n\n# Descubrir repositorios usando el método del GrypeAnalyzer\n# Este método viene de scripts/generate_grype.py\nrepositorios = analizador.discover_repositories()\nprint(f\"Repositorios encontrados: {len(repositorios)}\")\nfor repo in repositorios:\n    print(f\"  - {repo}\")\n\nRepositorios encontrados: 3\n  - data/repos/claude-code-action\n  - data/repos/genai-code-review\n  - data/repos/opencode\n\n\n\nprint(\"Iniciando análisis de vulnerabilidades con scripts/generate_grype.py...\")\nanalizador.run()\nprint(\"✓ Análisis completado\")\n\nINFO | === Grype Environment Diagnostics ===\nINFO | Grype CLI: Application:         grype\nVersion:             0.111.0\nBuildDate:           2026-04-09T13:14:56Z\nGitCommit:           1f19355a7ee2d7e2bd58da6255bdeb618eb0c0d1\nGitDescription:      v0.111.0\nPlatform:            linux/amd64\nGoVersion:           go1.25.9\nCompiler:            gc\nSyft Version:        v1.42.4\nSupported DB Schema: 6\n\n\nIniciando análisis de vulnerabilidades con scripts/generate_grype.py...\n\n\nINFO | Grype DB status: Path:      /home/vscode/.cache/grype/db/6/vulnerability.db\nSchema:    v6.1.4\nBuilt:     2026-04-11T06:33:07Z\nFrom:      https://grype.anchore.io/databases/v6/vulnerability-db_v6.1.4_2026-04-11T00:33:16Z_1775889187.tar.zst?checksum=sha256%3Adc346c1a349a2a05bb697264987bca2607deb8ce3795bd3c07d8bc43996be21b\nStatus:    valid\nINFO | === Environment Check Complete ===\n\nINFO | [1/3] Scanning data/repos/claude-code-action with Grype...\nINFO | Manifests found in claude-code-action: package-lock.json, package.json\nINFO | Running Grype on claude-code-action...\nINFO | Parsing Grype output...\nINFO | Found 5 matches in Grype output\nINFO | Parsed 5 vulnerabilities total\nINFO | Raw Grype output saved to data/results/claude-code-action-grype-raw.json\nINFO | Normalized analysis saved to data/results/claude-code-action-grype.json\nINFO | [2/3] Scanning data/repos/genai-code-review with Grype...\nINFO | Manifests found in genai-code-review: requirements.txt\nINFO | Running Grype on genai-code-review...\nINFO | Parsing Grype output...\nINFO | Found 3 matches in Grype output\nINFO | Parsed 3 vulnerabilities total\nINFO | Raw Grype output saved to data/results/genai-code-review-grype-raw.json\nINFO | Normalized analysis saved to data/results/genai-code-review-grype.json\nINFO | [3/3] Scanning data/repos/opencode with Grype...\nINFO | Manifests found in opencode: Cargo.lock, Cargo.toml, package.json\nINFO | Running Grype on opencode...\nINFO | Parsing Grype output...\nINFO | Found 9 matches in Grype output\nINFO | Parsed 9 vulnerabilities total\nINFO | Raw Grype output saved to data/results/opencode-grype-raw.json\nINFO | Normalized analysis saved to data/results/opencode-grype.json\nINFO | Summary | total_repos=3 | repos_scanned=3 | files_generated=6 | skipped=0 | errors=0\n\n\n✓ Análisis completado",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Vulnerabilidades con Grype"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_grype.html#inspección-de-resultados",
+    "href": "vuln/generacion_grype.html#inspección-de-resultados",
+    "title": "Análisis de Vulnerabilidades con Grype",
+    "section": "Inspección de Resultados",
+    "text": "Inspección de Resultados\n\n# Listar archivos de resultados generados\noutput_path = project_root / \"data\" / \"results\"\ngrype_files = sorted(output_path.glob(\"*-grype.json\"))\ngrype_raw_files = sorted(output_path.glob(\"*-grype-raw.json\"))\n\nprint(f\"📁 Buscando en: {output_path}\")\nprint(f\"✓ Archivos de análisis Grype (normalizados): {len(grype_files)}\")\nfor archivo in grype_files:\n    tamaño = archivo.stat().st_size / 1024  # KB\n    print(f\"  - {archivo.name} ({tamaño:.1f} KB)\")\n\nprint(f\"\\n✓ Archivos de análisis Grype (raw): {len(grype_raw_files)}\")\nfor archivo in grype_raw_files:\n    tamaño = archivo.stat().st_size / 1024  # KB\n    print(f\"  - {archivo.name} ({tamaño:.1f} KB)\")\n\n📁 Buscando en: /workspaces/id_2026/data/results\n✓ Archivos de análisis Grype (normalizados): 3\n  - claude-code-action-grype.json (2.1 KB)\n  - genai-code-review-grype.json (1.3 KB)\n  - opencode-grype.json (3.4 KB)\n\n✓ Archivos de análisis Grype (raw): 3\n  - claude-code-action-grype-raw.json (22.4 KB)\n  - genai-code-review-grype-raw.json (15.7 KB)\n  - opencode-grype-raw.json (30.8 KB)\n\n\n\n# Cargar y mostrar resumen de UN análisis\nresults_dir = project_root / \"data\" / \"results\"\nresults_files = sorted(results_dir.glob(\"*-grype.json\"))\n\nprint(f\"📂 Buscando en: {results_dir}\")\nprint(f\"📋 Archivos encontrados: {len(results_files)}\")\n\nif results_files:\n    result_file = results_files[0]\n    print(f\"📖 Leyendo: {result_file.name}\")\n    \n    with open(result_file, 'r', encoding='utf-8') as f:\n        data_content = json.load(f)\n    \n    repo_name_clean = result_file.stem.replace('-grype', '')\n    total_found = data_content.get('total_vulnerabilities', 0)\n    \n    print(f\"\\n📊 ANÁLISIS: {repo_name_clean}\")\n    print(f\"{'='*50}\")\n    print(f\"✓ Total de vulnerabilidades encontradas: {total_found}\")\n    \n    if total_found &gt; 0:\n        severity_data = data_content.get('vulnerabilities_by_severity', {})\n        print(f\"\\n🔍 Vulnerabilidades por severidad:\")\n        for severity_type, count in severity_data.items():\n            if count &gt; 0:\n                emoji = \"🔴\" if severity_type == \"critical\" else \"🟠\" if severity_type == \"high\" else \"🟡\" if severity_type == \"medium\" else \"⚪\"\n                print(f\"  {emoji} {severity_type}: {count}\")\n    else:\n        print(\"⚠️  No se encontraron vulnerabilidades\")\nelse:\n    print(\"❌ No se encontraron archivos de análisis Grype\")\n\n📂 Buscando en: /workspaces/id_2026/data/results\n📋 Archivos encontrados: 3\n📖 Leyendo: claude-code-action-grype.json\n\n📊 ANÁLISIS: claude-code-action\n==================================================\n✓ Total de vulnerabilidades encontradas: 5\n\n🔍 Vulnerabilidades por severidad:\n  ⚪ low: 5\n\n\n\n# Mostrar vulnerabilidades detalladas\noutput_path_det = project_root / \"data\" / \"results\"\ngrype_files_det = sorted(output_path_det.glob(\"*-grype.json\"))\n\nif grype_files_det:\n    archivo_det = grype_files_det[0]\n    \n    with open(archivo_det, 'r', encoding='utf-8') as f:\n        analisis_det = json.load(f)\n    \n    vulnerabilities_list = analisis_det.get('vulnerabilities', [])\n    \n    print(f\"📋 Leyendo: {archivo_det.name}\")\n    print(f\"📊 Total de vulnerabilidades en archivo: {len(vulnerabilities_list)}\")\n    \n    if vulnerabilities_list:\n        # Crear DataFrame con las vulnerabilidades\n        df_vulns = pd.DataFrame(vulnerabilities_list)\n        \n        # Seleccionar y reordenar columnas\n        cols_mostrar = ['package_name', 'current_version', 'vuln_id', 'vuln_severity', 'fix_version']\n        cols_disponibles = [c for c in cols_mostrar if c in df_vulns.columns]\n        df_mostrar = df_vulns[cols_disponibles].head(20)\n        \n        print(f\"\\n📋 Primeras 20 vulnerabilidades encontradas:\")\n        print(f\"{'='*120}\")\n        for idx, row in df_mostrar.iterrows():\n            print(f\"\\n{idx+1}. [{row['vuln_severity'].upper()}] {row['vuln_id']}\")\n            print(f\"   📦 {row['package_name']} (actual: {row['current_version']})\")\n            if pd.notna(row['fix_version']) and row['fix_version'] != 'N/A':\n                print(f\"   ✓ Fix disponible en: {row['fix_version']}\")\n        \n        if len(vulnerabilities_list) &gt; 20:\n            print(f\"\\n... y {len(vulnerabilities_list)-20} vulnerabilidades más\")\n    else:\n        print(\"⚠️  No hay detalles de vulnerabilidades en el archivo\")\n\n📋 Leyendo: claude-code-action-grype.json\n📊 Total de vulnerabilidades en archivo: 5\n\n📋 Primeras 20 vulnerabilidades encontradas:\n========================================================================================================================\n\n1. [LOW] GHSA-v9p9-hfj2-hcw8\n   📦 undici (actual: 5.29.0)\n\n2. [LOW] GHSA-vrm6-8vpv-qv8q\n   📦 undici (actual: 5.29.0)\n\n3. [LOW] GHSA-g9mf-h72j-4rw9\n   📦 undici (actual: 5.29.0)\n\n4. [LOW] GHSA-2mjp-6q6p-2qxm\n   📦 undici (actual: 5.29.0)\n\n5. [LOW] GHSA-4992-7rv2-5pvq\n   📦 undici (actual: 5.29.0)",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Vulnerabilidades con Grype"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_grype.html#análisis-detallado-de-vulnerabilidades",
+    "href": "vuln/generacion_grype.html#análisis-detallado-de-vulnerabilidades",
+    "title": "Análisis de Vulnerabilidades con Grype",
+    "section": "Análisis Detallado de Vulnerabilidades",
+    "text": "Análisis Detallado de Vulnerabilidades\n\n# Compilar estadísticas consolidadas\nfrom collections import defaultdict\n\noutput_path_stats = project_root / \"data\" / \"results\"\ngrype_files_stats = sorted(output_path_stats.glob(\"*-grype.json\"))\n\nstats_consolidadas = {\n    'total_repositories': len(grype_files_stats),\n    'total_vulnerabilities': 0,\n    'vulnerabilities_by_repo': {},\n    'vulnerabilities_by_severity': defaultdict(int),\n    'top_packages': defaultdict(int)\n}\n\nfor archivo in grype_files_stats:\n    with open(archivo, 'r', encoding='utf-8') as f:\n        data = json.load(f)\n    \n    repo_name = archivo.stem.replace('-grype', '')\n    total = data.get('total_vulnerabilities', 0)\n    \n    stats_consolidadas['total_vulnerabilities'] += total\n    stats_consolidadas['vulnerabilities_by_repo'][repo_name] = total\n    \n    # Contar por severidad\n    for severity, count in data.get('vulnerabilities_by_severity', {}).items():\n        stats_consolidadas['vulnerabilities_by_severity'][severity] += count\n    \n    # Contar top packages con vulnerabilidades\n    for vuln in data.get('vulnerabilities', []):\n        pkg = vuln.get('package', 'unknown')\n        stats_consolidadas['top_packages'][pkg] += 1\n\n# Convertir defaultdicts a dicts para visualización\nstats_consolidadas['vulnerabilities_by_severity'] = dict(stats_consolidadas['vulnerabilities_by_severity'])\nstats_consolidadas['top_packages'] = dict(sorted(\n    stats_consolidadas['top_packages'].items(), \n    key=lambda x: x[1], \n    reverse=True\n)[:10])\n\nprint(\"\\n📊 ESTADÍSTICAS CONSOLIDADAS DE GRYPE\")\nprint(f\"{'='*60}\")\nprint(f\"\\n📁 Repositorios analizados: {stats_consolidadas['total_repositories']}\")\nprint(f\"🔴 Total de vulnerabilidades: {stats_consolidadas['total_vulnerabilities']}\")\n\nprint(f\"\\n📋 Vulnerabilidades por repositorio:\")\nfor repo, count in stats_consolidadas['vulnerabilities_by_repo'].items():\n    print(f\"  • {repo}: {count}\")\n\nprint(f\"\\n⚠️  Vulnerabilidades por severidad:\")\nfor severity, count in sorted(stats_consolidadas['vulnerabilities_by_severity'].items()):\n    emoji = \"🔴\" if severity == \"critical\" else \"🟠\" if severity == \"high\" else \"🟡\" if severity == \"medium\" else \"⚪\"\n    print(f\"  {emoji} {severity}: {count}\")\n\nprint(f\"\\n📦 Top 10 paquetes con vulnerabilidades:\")\nfor pkg, count in list(stats_consolidadas['top_packages'].items())[:10]:\n    print(f\"  • {pkg}: {count}\")\n\n\n📊 ESTADÍSTICAS CONSOLIDADAS DE GRYPE\n============================================================\n\n📁 Repositorios analizados: 3\n🔴 Total de vulnerabilidades: 17\n\n📋 Vulnerabilidades por repositorio:\n  • claude-code-action: 5\n  • genai-code-review: 3\n  • opencode: 9\n\n⚠️  Vulnerabilidades por severidad:\n  🔴 critical: 0\n  🟠 high: 0\n  ⚪ low: 17\n  🟡 medium: 0\n\n📦 Top 10 paquetes con vulnerabilidades:\n  • unknown: 17",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Vulnerabilidades con Grype"
+    ]
+  },
+  {
+    "objectID": "vuln/generacion_grype.html#próximos-pasos",
+    "href": "vuln/generacion_grype.html#próximos-pasos",
+    "title": "Análisis de Vulnerabilidades con Grype",
+    "section": "Próximos Pasos",
+    "text": "Próximos Pasos\nLos resultados del análisis Grype se han guardado en data/results/ con los patrones: - {repo-name}-grype-raw.json: Salida original de Grype (útil para debug) - {repo-name}-grype.json: Formato normalizado (para análisis y visualización)\n\nCómo usar estos resultados:\n\nRevisar vulnerabilidades críticas: Filtrar por vuln_severity: \"critical\" para identificar problemas urgentes\nSeguimiento: Integrar con sistemas de seguimiento (issues, PRs) para gestionar remediación\nAnálisis de tendencias: Comparar resultados entre repositorios y períodos de tiempo\nActualizar dependencias: Usar fix_version para actualizar librerías vulnerables\nAutomatizar: Integrar estos análisis en CI/CD para detectar problemas continuamente\n\n\nPara agregar nuevos repositorios:\n\nEdita data/repos.json y agrega nuevos repositorios\nEjecuta en la terminal:\n\nuv run scripts/add_submodules.py\n\nEjecuta el análisis nuevamente desde el notebook o la terminal:\n\nuv run scripts/generate_grype.py",
+    "crumbs": [
+      "Vulnerabilidades",
+      "Análisis de Vulnerabilidades con Grype"
+    ]
+  }
+]
