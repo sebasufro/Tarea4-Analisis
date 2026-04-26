@@ -1,0 +1,21 @@
+{
+  "total_misconfigurations": 0,
+  "total_passed_checks": 0,
+  "total_skipped_checks": 0,
+  "misconfigurations_by_severity": {
+    "CRITICAL": 0,
+    "HIGH": 0,
+    "MEDIUM": 0,
+    "LOW": 0
+  },
+  "misconfigurations_by_framework": {},
+  "misconfigurations": [],
+  "checkov_metadata": {
+    "framework": "",
+    "check_type": "",
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "parsing_errors": 0
+  }
+}

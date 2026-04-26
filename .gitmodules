@@ -7,3 +7,18 @@
 [submodule "data/repos/opencode"]
 	path = data/repos/opencode
 	url = https://github.com/anomalyco/opencode.git
+[submodule "data/repos/Flowise"]
+	path = data/repos/Flowise
+	url = https://github.com/FlowiseAI/Flowise.git
+[submodule "data/repos/FlowiseChatEmbed"]
+	path = data/repos/FlowiseChatEmbed
+	url = https://github.com/FlowiseAI/FlowiseChatEmbed.git
+[submodule "data/repos/FlowiseDocs"]
+	path = data/repos/FlowiseDocs
+	url = https://github.com/FlowiseAI/FlowiseDocs.git
+[submodule "data/repos/FlowiseEmbedReact"]
+	path = data/repos/FlowiseEmbedReact
+	url = https://github.com/FlowiseAI/FlowiseEmbedReact.git
+[submodule "data/repos/FlowisePy"]
+	path = data/repos/FlowisePy
+	url = https://github.com/FlowiseAI/FlowisePy.git
