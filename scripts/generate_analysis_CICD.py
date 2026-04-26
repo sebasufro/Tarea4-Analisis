@@ -14,10 +14,9 @@ RUTA_REPOS_POR_DEFECTO = RUTA_BASE_CICD / "data" / "repos"
 RUTA_RESULTADOS_POR_DEFECTO = RUTA_BASE_CICD / "data" / "results"
 SUFIJO_CICD_RAW = "-cicd-raw.json"
 SUFIJO_CICD = "-cicd.json"
-FORMATO_SALIDA_TRIVY = "json"
-MENSAJE_TRIVY_NO_INSTALADO = (
-    "Trivy CLI is not installed. Please install it from "
-    "https://github.com/aquasecurity/trivy"
+FORMATO_SALIDA_CHECKOV = "json"
+MENSAJE_CHECKOV_NO_INSTALADO = (
+    "Checkov is not installed. Please install it using: pip install checkov"
 )
 
 # Archivos y directorios de CI/CD a analizar
@@ -40,15 +39,15 @@ PATRON_ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 
 
 class CICDAnalyzer:
-    """Analizador de vulnerabilidades en configuraciones CI/CD usando Trivy."""
+    """Analizador de vulnerabilidades en configuraciones CI/CD usando Checkov."""
 
     def __init__(self, repos_path: str, output_path: str):
         self.repos_path = Path(repos_path).expanduser().resolve()
         self.output_path = Path(output_path).expanduser().resolve()
         self.project_root = Path(__file__).resolve().parents[1]
-        self.trivy_bin = "trivy"
+        self.checkov_bin = "checkov"
         self.dry_run = False
-        self.trivy_path: str | None = None
+        self.checkov_path: str | None = None
 
     def discover_repositories(self) -> list[str]:
         """Devuelve una lista de rutas de repositorios."""
@@ -94,8 +93,8 @@ class CICDAnalyzer:
 
         return cicd_files
 
-    def run_trivy(self, repo_path: str) -> str:
-        """Ejecuta Trivy en el repositorio y devuelve JSON con misconfigurations."""
+    def run_checkov(self, repo_path: str) -> str:
+        """Ejecuta Checkov en el repositorio y devuelve JSON con misconfigurations."""
         ruta_repo = self.project_root / repo_path
 
         if not ruta_repo.exists():
@@ -114,23 +113,30 @@ class CICDAnalyzer:
                 f"No CI/CD configuration files found in {ruta_repo.name}. Skipping."
             )
             return json.dumps({
-                "Results": [],
-                "Metadata": {"Severity": [], "Type": ""}
+                "check_type_to_results": {},
+                "results": {
+                    "failed_checks": [],
+                    "passed_checks": [],
+                    "skipped_checks": []
+                },
+                "summary": {}
             })
 
         LOGGER.info(f"CI/CD files found in {ruta_repo.name}: {len(cicd_files)} files")
 
-        # Ejecutar Trivy
-        trivy_path = self.trivy_path or self._resolver_trivy()
+        # Ejecutar Checkov
+        checkov_path = self.checkov_path or self._resolver_checkov()
         comando = [
-            trivy_path,
-            "config",
+            checkov_path,
+            "--directory",
             str(ruta_repo),
-            f"--format={FORMATO_SALIDA_TRIVY}",
-            "--skip-update",
+            "--format",
+            FORMATO_SALIDA_CHECKOV,
+            "--quiet",
+            "--skip-download",
         ]
 
-        LOGGER.info(f"Running Trivy on {ruta_repo.name}...")
+        LOGGER.info(f"Running Checkov on {ruta_repo.name}...")
         resultado = subprocess.run(
             comando,
             capture_output=True,
@@ -139,87 +145,99 @@ class CICDAnalyzer:
         )
 
         if resultado.returncode != 0:
-            # Trivy puede retornar >0 si hay misconfigurations encontradas
-            # Solo falla si hay error real
-            if "error" in resultado.stderr.lower() and "no such file" in resultado.stderr.lower():
-                raise RuntimeError(
-                    f"Trivy analysis failed for {ruta_repo.name}: {resultado.stderr}"
-                )
-            # Si solo hay warnings, continuar
-            LOGGER.debug(f"Trivy stderr: {resultado.stderr}")
+            # Checkov retorna >0 si hay fallos encontrados, pero podría haber errores reales
+            if "error" in resultado.stderr.lower() and "not found" in resultado.stderr.lower():
+                LOGGER.debug(f"Checkov stderr: {resultado.stderr}")
+                # Retorna resultado vacío si hay error pero continúa
+                return json.dumps({
+                    "check_type_to_results": {},
+                    "results": {
+                        "failed_checks": [],
+                        "passed_checks": [],
+                        "skipped_checks": []
+                    },
+                    "summary": {}
+                })
+            LOGGER.debug(f"Checkov stderr: {resultado.stderr}")
 
-        if not resultado.stdout:
+        if not resultado.stdout or resultado.stdout.strip() == "":
             return json.dumps({
-                "Results": [],
-                "Metadata": {"Severity": [], "Type": ""}
+                "check_type_to_results": {},
+                "results": {
+                    "failed_checks": [],
+                    "passed_checks": [],
+                    "skipped_checks": []
+                },
+                "summary": {}
             })
 
         return resultado.stdout
 
-    def parse_trivy_output(self, trivy_json_str: str) -> dict:
-        """Convierte JSON de Trivy a un formato normalizado."""
-        LOGGER.info("Parsing Trivy output...")
+    def parse_checkov_output(self, checkov_json_str: str) -> dict:
+        """Convierte JSON de Checkov a un formato normalizado."""
+        LOGGER.info("Parsing Checkov output...")
 
         try:
-            trivy_data = json.loads(trivy_json_str)
+            checkov_data = json.loads(checkov_json_str)
         except json.JSONDecodeError as error:
-            raise RuntimeError(f"Failed to parse Trivy JSON output: {error}")
+            raise RuntimeError(f"Failed to parse Checkov JSON output: {error}")
 
-        # Extraer misconfigurations
-        resultados_raw = trivy_data.get("Results", [])
-        LOGGER.info(f"Found {len(resultados_raw)} result groups in Trivy output")
+        # Extraer misconfigurations (failed checks)
+        resultados_raw = checkov_data.get("results", {})
+        failed_checks = resultados_raw.get("failed_checks", [])
+        passed_checks = resultados_raw.get("passed_checks", [])
+        skipped_checks = resultados_raw.get("skipped_checks", [])
+
+        LOGGER.info(f"Found {len(failed_checks)} failed checks in Checkov output")
 
         # Normalizar
         resultados = {
-            "total_misconfigurations": 0,
+            "total_misconfigurations": len(failed_checks),
+            "total_passed_checks": len(passed_checks),
+            "total_skipped_checks": len(skipped_checks),
             "misconfigurations_by_severity": {
                 "CRITICAL": 0,
                 "HIGH": 0,
                 "MEDIUM": 0,
                 "LOW": 0,
             },
-            "misconfigurations_by_type": {},
+            "misconfigurations_by_framework": {},
             "misconfigurations": [],
-            "trivy_metadata": self._extraer_metadata(trivy_data),
+            "checkov_metadata": self._extraer_metadata(checkov_data),
         }
 
-        for result_group in resultados_raw:
-            misconfigurations = result_group.get("Misconfigurations", [])
+        for failed_check in failed_checks:
+            misc_norm = self._procesar_misconfiguracion(failed_check)
+            resultados["misconfigurations"].append(misc_norm)
 
-            for misconfiguration in misconfigurations:
-                misc_norm = self._procesar_misconfiguracion(misconfiguration)
-                resultados["misconfigurations"].append(misc_norm)
+            # Contar por severidad
+            severity = misc_norm.get("severity", "LOW").upper()
+            if severity in resultados["misconfigurations_by_severity"]:
+                resultados["misconfigurations_by_severity"][severity] += 1
 
-                # Contar por severidad
-                severity = misc_norm.get("severity", "LOW")
-                if severity in resultados["misconfigurations_by_severity"]:
-                    resultados["misconfigurations_by_severity"][severity] += 1
-
-                # Contar por tipo
-                misc_type = misc_norm.get("type", "Unknown")
-                if misc_type not in resultados["misconfigurations_by_type"]:
-                    resultados["misconfigurations_by_type"][misc_type] = 0
-                resultados["misconfigurations_by_type"][misc_type] += 1
-
-                resultados["total_misconfigurations"] += 1
+            # Contar por framework
+            framework = misc_norm.get("framework", "Unknown")
+            if framework not in resultados["misconfigurations_by_framework"]:
+                resultados["misconfigurations_by_framework"][framework] = 0
+            resultados["misconfigurations_by_framework"][framework] += 1
 
         LOGGER.info(
             f"Parsed {resultados['total_misconfigurations']} misconfigurations total"
         )
         return resultados
 
-    def save_analysis(self, repo_name: str, trivy_raw: str, analysis_data: dict) -> tuple[Path, Path]:
+    def save_analysis(self, repo_name: str, checkov_raw: str, analysis_data: dict) -> tuple[Path, Path]:
         """Guarda el análisis en dos formatos: raw (debug) y normalizado (análisis)."""
         if not repo_name:
             raise ValueError("Repository name cannot be empty.")
 
         self.output_path.mkdir(parents=True, exist_ok=True)
 
-        # Guardar formato raw (original de Trivy)
+        # Guardar formato raw (original de Checkov)
         ruta_raw = self.output_path / f"{repo_name}{SUFIJO_CICD_RAW}"
-        ruta_raw.write_text(trivy_raw, encoding="utf-8")
+        ruta_raw.write_text(checkov_raw, encoding="utf-8")
         LOGGER.info(
-            f"Raw Trivy output saved to {ruta_raw.relative_to(self.project_root)}"
+            f"Raw Checkov output saved to {ruta_raw.relative_to(self.project_root)}"
         )
 
         # Guardar formato normalizado
@@ -267,13 +285,13 @@ class CICDAnalyzer:
                 )
 
                 # Ejecutar análisis
-                trivy_output = self.run_trivy(repo_path)
+                checkov_output = self.run_checkov(repo_path)
 
                 # Procesar resultados
-                analysis = self.parse_trivy_output(trivy_output)
+                analysis = self.parse_checkov_output(checkov_output)
 
                 # Guardar ambos formatos
-                self.save_analysis(ruta_repo.name, trivy_output, analysis)
+                self.save_analysis(ruta_repo.name, checkov_output, analysis)
 
                 repositorios_analizados += 1
                 archivos_generados += 2  # raw + normalizado
@@ -303,53 +321,59 @@ class CICDAnalyzer:
         if self.output_path.exists() and not self.output_path.is_dir():
             raise NotADirectoryError(f"Output path exists but is not a directory: {self.output_path}")
 
-    def _resolver_trivy(self) -> str:
-        """Busca el ejecutable de Trivy en PATH."""
-        ruta_trivy = shutil.which(self.trivy_bin)
-        if not ruta_trivy:
-            raise RuntimeError(MENSAJE_TRIVY_NO_INSTALADO)
+    def _resolver_checkov(self) -> str:
+        """Busca el ejecutable de Checkov en PATH."""
+        ruta_checkov = shutil.which(self.checkov_bin)
+        if not ruta_checkov:
+            raise RuntimeError(MENSAJE_CHECKOV_NO_INSTALADO)
 
-        self.trivy_path = ruta_trivy
-        return ruta_trivy
+        self.checkov_path = ruta_checkov
+        return ruta_checkov
 
     def _diagnosticar_entorno(self):
-        """Verifica que Trivy esté disponible."""
-        LOGGER.info("=== Trivy Environment Diagnostics ===")
+        """Verifica que Checkov esté disponible."""
+        LOGGER.info("=== Checkov Environment Diagnostics ===")
 
         try:
-            trivy_path = self._resolver_trivy()
+            checkov_path = self._resolver_checkov()
             resultado = subprocess.run(
-                [trivy_path, "version"],
+                [checkov_path, "--version"],
                 capture_output=True,
                 text=True,
                 check=False,
             )
-            LOGGER.info(f"Trivy CLI: {resultado.stdout.strip()}")
+            LOGGER.info(f"Checkov CLI: {resultado.stdout.strip()}")
         except Exception as e:
-            LOGGER.error(f"Trivy CLI check failed: {e}")
+            LOGGER.error(f"Checkov CLI check failed: {e}")
 
-    def _procesar_misconfiguracion(self, misc: dict) -> dict:
-        """Normaliza información de una misconfiguration de Trivy."""
+    def _procesar_misconfiguracion(self, check: dict) -> dict:
+        """Normaliza información de un check fallido de Checkov."""
         return {
-            "id": misc.get("ID", ""),
-            "title": misc.get("Title", ""),
-            "description": misc.get("Description", ""),
-            "severity": misc.get("Severity", "LOW"),
-            "type": misc.get("Type", "Unknown"),
-            "resource": misc.get("Resource", ""),
-            "rule": misc.get("Rule", ""),
-            "avd_id": misc.get("AVDID", ""),
+            "check_id": check.get("check_id", ""),
+            "check_name": check.get("check_name", ""),
+            "check_result": check.get("check_result", {}),
+            "code_block": check.get("code_block", []),
+            "file_path": check.get("file_path", ""),
+            "file_abs_path": check.get("file_abs_path", ""),
+            "repo_file_path": check.get("repo_file_path", ""),
+            "file_line_range": check.get("file_line_range", []),
+            "resource": check.get("resource", ""),
+            "evaluations": check.get("evaluations", {}),
+            "check_class": check.get("check_class", ""),
+            "severity": check.get("severity", "LOW"),
+            "framework": check.get("framework", "Unknown"),
         }
 
-    def _extraer_metadata(self, trivy_data: dict) -> dict:
-        """Extrae metadata de Trivy."""
-        metadata = trivy_data.get("Metadata", {})
+    def _extraer_metadata(self, checkov_data: dict) -> dict:
+        """Extrae metadata de Checkov."""
+        summary = checkov_data.get("summary", {})
         return {
-            "image_name": metadata.get("ImageName", ""),
-            "image_tag": metadata.get("ImageTag", ""),
-            "image_id": metadata.get("ImageID", ""),
-            "registry_url": metadata.get("RegistryURL", ""),
-            "image_config": metadata.get("ImageConfig", {}),
+            "framework": summary.get("framework", ""),
+            "check_type": summary.get("check_type", ""),
+            "passed": summary.get("passed", 0),
+            "failed": summary.get("failed", 0),
+            "skipped": summary.get("skipped", 0),
+            "parsing_errors": summary.get("parsing_errors", 0),
         }
 
     def _eliminar_archivos_parciales(self, repo_name: str):
@@ -362,7 +386,7 @@ class CICDAnalyzer:
 
 def _construir_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Analyzes CI/CD configuration vulnerabilities in all repositories using Trivy."
+        description="Analyzes CI/CD configuration vulnerabilities in all repositories using Checkov."
     )
     parser.add_argument(
         "--repos-path",
@@ -377,7 +401,7 @@ def _construir_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Shows which repositories would be scanned without running Trivy.",
+        help="Shows which repositories would be scanned without running Checkov.",
     )
     return parser
 
@@ -400,21 +424,20 @@ def main() -> int:
 if __name__ == "__main__":
     raise SystemExit(main())
 
-
 """
 Análisis de Vulnerabilidades en Configuraciones CI/CD
 
 Script que automatiza el escaneo de vulnerabilidades en archivos de configuración CI/CD
-sobre múltiples repositorios usando Trivy, una herramienta de análisis enfocada en
-misconfigurations de infraestructura.
+sobre múltiples repositorios usando Checkov, una herramienta de análisis enfocada en
+misconfigurations de infraestructura e IaC.
 
 Proceso:
 1. Descubre todos los repositorios en data/repos/
 2. Identifica archivos de configuración CI/CD (.github/workflows/, .gitlab-ci.yml, etc.)
-3. Ejecuta Trivy para detectar misconfigurations y vulnerabilidades
-4. Normaliza la salida JSON de Trivy
+3. Ejecuta Checkov para detectar misconfigurations y vulnerabilidades
+4. Normaliza la salida JSON de Checkov
 5. Guarda resultados en data/results/ con dos formatos:
-   - {repo-name}-cicd-raw.json: Salida original de Trivy (para debug)
+   - {repo-name}-cicd-raw.json: Salida original de Checkov (para debug)
    - {repo-name}-cicd.json: Formato normalizado (para análisis)
 
 Uso:
@@ -423,12 +446,12 @@ Uso:
     python scripts/generate_analysis_CICD.py --repos-path PATH  # Con rutas personalizadas
 
 Requisitos:
-    - Trivy CLI instalado (https://github.com/aquasecurity/trivy)
+    - Checkov instalado (pip install checkov)
     - Repositorios clonados en data/repos/
 
 Salida:
     - Archivos JSON en data/results/ con patrones:
-      * {repo-name}-cicd-raw.json: Salida original de Trivy
+      * {repo-name}-cicd-raw.json: Salida original de Checkov
       * {repo-name}-cicd.json: Formato normalizado
     - Logs con progreso e información de errores
     - Resumen final con estadísticas de misconfigurations
